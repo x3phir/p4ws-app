@@ -1,0 +1,186 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  phone     String?
+  avatar    String?
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  reports   Report[]
+  adoptions AdoptionRequest[]
+  donations Donation[]
+}
+
+model Shelter {
+  id               String   @id @default(uuid())
+  name             String
+  description      String?
+  address          String
+  phone            String?
+  email            String?
+  capacity         Int      @default(50)
+  currentOccupancy Int      @default(0)
+  isAvailable      Boolean  @default(true)
+  imageUrl         String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  pets      Pet[]
+  reports   Report[]
+  campaigns Campaign[]
+}
+
+model Pet {
+  id          String     @id @default(uuid())
+  name        String
+  description String
+  about       String
+  imageUrl    String
+  age         String?
+  gender      String?
+  breed       String?
+  vaccine     String     @default("Belum")
+  steril      String     @default("Belum")
+  shelterId   String
+  status      PetStatus  @default(AVAILABLE)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  
+  shelter Shelter @relation(fields: [shelterId], references: [id], onDelete: Cascade)
+  adoptions AdoptionRequest[]
+}
+
+model Report {
+  id          String       @id @default(uuid())
+  userId      String
+  location    String
+  condition   CatCondition
+  imageUrl    String?
+  description String?
+  shelterId   String
+  status      ReportStatus @default(PENDING)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shelter  Shelter    @relation(fields: [shelterId], references: [id])
+  timeline Timeline[]
+}
+
+model Timeline {
+  id          String   @id @default(uuid())
+  reportId    String
+  activity    String
+  description String?
+  icon        String?
+  createdAt   DateTime @default(now())
+  
+  report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+}
+
+model Campaign {
+  id            String         @id @default(uuid())
+  title         String
+  description   String
+  imageUrl      String
+  targetAmount  Float
+  currentAmount Float          @default(0)
+  shelterId     String
+  status        CampaignStatus @default(ACTIVE)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  
+  shelter Shelter @relation(fields: [shelterId], references: [id])
+  donations Donation[]
+}
+
+model AdoptionRequest {
+  id           String         @id @default(uuid())
+  userId       String
+  petId        String
+  status       AdoptionStatus @default(PENDING)
+  reason       String?        // Alasan adopsi / persyaratan
+  hasYard      Boolean?       // Apakah ada halaman?
+  hasOtherPets Boolean?       // Apakah ada hewan lain?
+  contact      String?        // Kontak yang bisa dihubungi
+  adminNote    String?        // Catatan dari admin (misal: detail penjemputan)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pet  Pet  @relation(fields: [petId], references: [id], onDelete: Cascade)
+}
+
+model Donation {
+  id          String         @id @default(uuid())
+  amount      Float
+  proofUrl    String
+  status      DonationStatus @default(PENDING)
+  userId      String
+  campaignId  String
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id])
+  campaign Campaign @relation(fields: [campaignId], references: [id])
+}
+
+enum Role {
+  USER
+  ADMIN
+  SHELTER_STAFF
+}
+
+enum PetStatus {
+  AVAILABLE
+  ADOPTED
+  PENDING
+}
+
+enum CatCondition {
+  SEHAT
+  TERLUKA
+  SAKIT
+}
+
+enum ReportStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  CANCELLED
+}
+
+enum CampaignStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum AdoptionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+  CANCELLED
+}
+
+enum DonationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
