@@ -1,98 +1,192 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React, { useRef } from "react";
+import {
+  Animated,
+  Dimensions,
+  PanResponder,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+// Import Components
+import CampaignCard from "@/components/ui/CampaignCard";
+import Header from "@/components/ui/Header";
+import MapPreview from "@/components/ui/MapPreview";
+import ScreenWrapper from "@/components/ui/ScreenWrapper";
+import ShelterItem from "@/components/ui/ShelterItem";
 
-export default function HomeScreen() {
+const { height } = Dimensions.get("window");
+
+const ExploreScreen = () => {
+  const INITIAL_POSITION = height / 2.5;
+  const pan = useRef(new Animated.Value(INITIAL_POSITION)).current;
+  const lastOffset = useRef(INITIAL_POSITION);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gestureState) =>
+        Math.abs(gestureState.dy) > 5,
+
+      onPanResponderGrant: () => {
+        pan.setOffset(lastOffset.current);
+        pan.setValue(0);
+      },
+
+      onPanResponderMove: Animated.event([null, { dy: pan }], {
+        useNativeDriver: false,
+      }),
+
+      onPanResponderRelease: (_, gestureState) => {
+        lastOffset.current += gestureState.dy;
+
+        // BATAS BAWAH: Jangan sampai lewat dari posisi tengah awal
+        if (lastOffset.current > INITIAL_POSITION) {
+          lastOffset.current = INITIAL_POSITION;
+          Animated.spring(pan, {
+            toValue: INITIAL_POSITION,
+            useNativeDriver: false,
+          }).start();
+        }
+
+        // BATAS ATAS: Berhenti tepat di bawah Header
+        if (lastOffset.current < 0) {
+          lastOffset.current = 0;
+          Animated.spring(pan, { toValue: 0, useNativeDriver: false }).start();
+        }
+
+        pan.flattenOffset();
+      },
+    })
+  ).current;
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <ScreenWrapper backgroundImage={require("@/assets/images/BG-1.png")}>
+      <Header name="Rex ID" />
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      <Animated.View
+        {...panResponder.panHandlers}
+        style={[
+          styles.mainCard,
+          {
+            transform: [{ translateY: pan }],
+            height: height,
+          },
+        ]}
+      >
+        <View style={styles.handleBar} />
+
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+          // Agar scrollview tidak mematikan fungsi tarik kartu saat di atas
+          nestedScrollEnabled={true}
+        >
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Laporan Terdekat</Text>
+            <View style={styles.mapContainer}>
+              <MapPreview />
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Campaign Donasi Mendesak</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalPadding}
+            >
+              <CampaignCard
+                id="1" // ID untuk navigasi ke /donation/1
+                title="Pakan kucing"
+                shelter="Paw Care"
+                collected="Rp 125.000"
+                daysLeft={30}
+                progress={0.4}
+                imageUri="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba"
+              />
+              <CampaignCard
+                id="2" // ID untuk navigasi ke /donation/2
+                title="Obat-obatan"
+                shelter="Paw Care"
+                collected="Rp 250.000"
+                daysLeft={12}
+                progress={0.7}
+                imageUri="https://images.unsplash.com/photo-1573865668131-974279df4045"
+              />
+            </ScrollView>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Shelter Kami</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalPadding}
+            >
+              <ShelterItem
+                name="Paw Care"
+                imageUri="https://images.unsplash.com/photo-1543852786-1cf6624b9987"
+              />
+              <ShelterItem
+                name="Kitten Home"
+                imageUri="https://images.unsplash.com/photo-1573865668131-974279df4045"
+              />
+            </ScrollView>
+          </View>
+        </ScrollView>
+      </Animated.View>
+    </ScreenWrapper>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
+  mainCard: {
+    position: "absolute",
     left: 0,
-    position: 'absolute',
+    right: 0,
+    top: 220,
+    backgroundColor: "#F5EFE6",
+    borderTopLeftRadius: 40,
+    borderTopRightRadius: 40,
+    paddingTop: 15,
+    elevation: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 15,
+  },
+  handleBar: {
+    width: 45,
+    height: 6,
+    backgroundColor: "#D1D5DB",
+    borderRadius: 3,
+    alignSelf: "center",
+    marginBottom: 15,
+  },
+  scrollContent: {
+    paddingBottom: 450, // Tambah padding agar konten paling bawah tidak tertutup
+  },
+  section: {
+    marginBottom: 30,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#1a1a1a",
+    paddingHorizontal: 24,
+    marginBottom: 15,
+  },
+  mapContainer: {
+    marginHorizontal: 24,
+    height: 180,
+    borderRadius: 30,
+    overflow: "hidden",
+  },
+  horizontalPadding: {
+    paddingHorizontal: 24,
+    gap: 12,
   },
 });
+
+export default ExploreScreen;
