@@ -26,27 +26,33 @@ Query Parameters (optional):
 ---
 
 ### Update Report Status
-PUT /reports/:id/status
+**PUT** `/reports/:id/status`
 
-Headers:
-Authorization: Bearer <admin_token>
+**Headers:**
+`Authorization: Bearer <admin_token>`
 
-Request Body Examples:
+**Request Body Examples:**
 
 PENDING -> PROCESSING
+``` json
 {
   "status": "PROCESSING"
 }
+```
 
 PROCESSING -> COMPLETED
+``` json
 {
   "status": "COMPLETED"
 }
+```
 
 PENDING -> CANCELLED
+``` json
 {
   "status": "CANCELLED"
 }
+```
 
 ---
 
