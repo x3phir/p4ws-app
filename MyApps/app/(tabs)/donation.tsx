@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from "react-native";
 
@@ -17,12 +18,14 @@ import FilterBar from "@/components/ui/FilterBar";
 import UrgentBadge from "@/components/ui/UrgentBadge";
 import { Campaign, getAllCampaigns } from "@/services/campaignService";
 
-const { width } = Dimensions.get("window");
+const { width, height } = Dimensions.get("window");
 
 const DonationScreen = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortOption, setSortOption] = useState("Terbaru"); // Terbaru, Target, Progress
+  const [isSortModalVisible, setIsSortModalVisible] = useState(false);
 
   useEffect(() => {
     const fetchCampaigns = async () => {
@@ -40,13 +43,24 @@ const DonationScreen = () => {
     fetchCampaigns();
   }, []);
 
-  const filteredCampaigns = campaigns.filter(c =>
-    c.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filter & Sort logic
+  const filteredAndSortedCampaigns = campaigns
+    .filter(c => c.title.toLowerCase().includes(searchQuery.toLowerCase()))
+    .sort((a, b) => {
+      if (sortOption === "Target") {
+        return b.targetAmount - a.targetAmount;
+      } else if (sortOption === "Progress") {
+        const progressA = a.currentAmount / a.targetAmount;
+        const progressB = b.currentAmount / b.targetAmount;
+        return progressB - progressA;
+      }
+      // Default: Terbaru
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
 
-  // Divide into Urgent (first 3) and Others (rest)
-  const urgentCampaigns = filteredCampaigns.slice(0, 3);
-  const otherCampaigns = filteredCampaigns.slice(3);
+  // Divide into Urgent and Others based on backend flag
+  const urgentCampaigns = filteredAndSortedCampaigns.filter(c => c.isUrgent);
+  const otherCampaigns = filteredAndSortedCampaigns.filter(c => !c.isUrgent);
 
   // Helper to format currency
   const formatCurrency = (amount: number) => {
@@ -101,7 +115,6 @@ const DonationScreen = () => {
                         title={campaign.title}
                         shelter={campaign.shelter?.name || "Shelter"}
                         collected={formatCurrency(campaign.currentAmount)}
-                        daysLeft={30} // Placeholder as backend data might not have deadline yet
                         progress={Math.min(campaign.currentAmount / campaign.targetAmount, 1)}
                         imageUri={campaign.imageUrl}
                       />
@@ -118,7 +131,10 @@ const DonationScreen = () => {
                 Program Lainnya
               </Text>
 
-              <FilterBar />
+              <FilterBar
+                onSortPress={() => setIsSortModalVisible(true)}
+                onFilterPress={() => alert("Filter functionality coming soon!")}
+              />
 
               <View style={styles.listContainer}>
                 {otherCampaigns.length > 0 ? (
@@ -145,6 +161,33 @@ const DonationScreen = () => {
           </>
         )}
       </ScrollView>
+
+      {/* Sort Modal */}
+      {isSortModalVisible && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Urutkan Donasi</Text>
+            {["Terbaru", "Target", "Progress"].map(option => (
+              <TouchableOpacity
+                key={option}
+                style={styles.modalOption}
+                onPress={() => {
+                  setSortOption(option);
+                  setIsSortModalVisible(false);
+                }}
+              >
+                <Text style={[styles.modalOptionText, sortOption === option && styles.activeModalOptionText]}>{option}</Text>
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity
+              style={styles.closeModalBtn}
+              onPress={() => setIsSortModalVisible(false)}
+            >
+              <Text style={styles.closeModalText}>Tutup</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
     </View>
   );
 };
@@ -212,6 +255,49 @@ const styles = StyleSheet.create({
   listContainer: {
     paddingTop: 5,
     paddingHorizontal: 20,
+  },
+  modalOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  modalContent: {
+    width: '80%',
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 24,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  modalOption: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  modalOptionText: {
+    fontSize: 16,
+    color: '#4B5563',
+  },
+  activeModalOptionText: {
+    color: '#B5E661',
+    fontWeight: 'bold',
+  },
+  closeModalBtn: {
+    marginTop: 16,
+    paddingVertical: 10,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  closeModalText: {
+    color: '#4B5563',
+    fontWeight: '600',
   },
 });
 

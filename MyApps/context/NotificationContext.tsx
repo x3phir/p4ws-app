@@ -16,7 +16,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const [lastNotification, setLastNotification] = useState<Notification | null>(null);
     const { isLoggedIn } = useAuth();
     const pollingInterval = useRef<any>(null);
-    const isInitialLoad = useRef(true);
+    const lastShownId = useRef<string | null>(null);
 
     const fetchNotifications = async () => {
         if (!isLoggedIn) return;
@@ -25,17 +25,17 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
             const data = await getNotifications();
 
             // Check for new notifications to trigger popup
-            if (!isInitialLoad.current && data.length > 0) {
+            if (data.length > 0) {
                 const latest = data[0];
-                const existing = notifications.find(n => n.id === latest.id);
 
-                if (!existing && !latest.isRead) {
+                // Only show if it's new, unread, and hasn't been shown in this session
+                if (!latest.isRead && latest.id !== lastShownId.current) {
                     setLastNotification(latest);
+                    lastShownId.current = latest.id;
                 }
             }
 
             setNotifications(data);
-            isInitialLoad.current = false;
         } catch (error) {
             console.error('Failed to fetch notifications in context:', error);
         }

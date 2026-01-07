@@ -9,9 +9,12 @@ import {
 
 const categories = ["Semua", "Kitten", "Dewasa", "Terdekat"];
 
-const CategoryTabs = () => {
-  const [active, setActive] = useState("Semua");
+interface CategoryTabsProps {
+  onSelect: (category: string) => void;
+  active: string;
+}
 
+const CategoryTabs = ({ onSelect, active }: CategoryTabsProps) => {
   return (
     <View style={styles.wrapper}>
       <ScrollView
@@ -24,7 +27,7 @@ const CategoryTabs = () => {
           return (
             <TouchableOpacity
               key={cat}
-              onPress={() => setActive(cat)}
+              onPress={() => onSelect(cat)}
               activeOpacity={0.8}
               style={[
                 styles.tabButton,

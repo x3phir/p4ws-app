@@ -8,6 +8,7 @@ exports.getAllCampaigns = async (req, res) => {
         const where = {};
         if (status) where.status = status;
         if (shelterId) where.shelterId = shelterId;
+        if (req.query.isUrgent !== undefined) where.isUrgent = req.query.isUrgent === 'true';
 
         const campaigns = await prisma.campaign.findMany({
             where,
@@ -49,10 +50,9 @@ exports.getCampaignById = async (req, res) => {
     }
 };
 
-// Create campaign
 exports.createCampaign = async (req, res) => {
     try {
-        const { title, description, imageUrl, targetAmount, shelterId } = req.body;
+        const { title, description, imageUrl, targetAmount, shelterId, isUrgent } = req.body;
 
         const campaign = await prisma.campaign.create({
             data: {
@@ -60,7 +60,8 @@ exports.createCampaign = async (req, res) => {
                 description,
                 imageUrl,
                 targetAmount: parseFloat(targetAmount),
-                shelterId
+                shelterId,
+                isUrgent: isUrgent === true || isUrgent === 'true'
             },
             include: {
                 shelter: true

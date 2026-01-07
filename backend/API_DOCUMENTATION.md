@@ -314,7 +314,7 @@ Authorization: Bearer <your_token>
 **Request Body:**
 ```json
 {
-  "status": "PROCESSING",
+  "status": "PROCESSING"
 }
 ```
 

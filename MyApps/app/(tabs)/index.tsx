@@ -6,12 +6,11 @@ import {
   ActivityIndicator,
   Animated,
   Dimensions,
-  Image,
-  PanResponder,
   ScrollView,
   StyleSheet,
   Text,
   View,
+  TouchableOpacity,
 } from "react-native";
 import { Colors } from "@/constants/theme";
 import { Cat, Heart, Home, Users } from "lucide-react-native";
@@ -25,44 +24,52 @@ import ShelterItem from "@/components/ui/ShelterItem";
 const { height, width } = Dimensions.get("window");
 
 const ExploreScreen = () => {
-  const INITIAL_POSITION = height / 2.8;
-  const pan = useRef(new Animated.Value(INITIAL_POSITION)).current;
-  const lastOffset = useRef(INITIAL_POSITION);
+  const CARD_HEIGHT = height - 100;
+  const COLLAPSED_POSITION = height - 230;
+  const EXPANDED_POSITION = 190;
 
-  // Animation values - useNativeDriver: false for all to avoid conflict with pan
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(30)).current;
+  const pan = useRef(new Animated.Value(COLLAPSED_POSITION)).current;
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Individual fade animations for stats
+  const statsFadeAnims = useRef(
+    [0, 1, 2, 3].map(() => new Animated.Value(0))
+  ).current;
 
   const [reports, setReports] = useState<any[]>([]);
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [shelters, setShelters] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Statistics data (Mocked for now)
-  const stats = [
-    { label: "Kucing Diselamatkan", value: "128", icon: <Cat size={20} color={Colors.primary} />, color: "#E8F5E9" },
-    { label: "Total Donasi", value: "Rps 45jt+", icon: <Heart size={20} color="#FF6B6B" />, color: "#FFF5F5" },
-    { label: "Shelter Partner", value: "12", icon: <Home size={20} color="#4DABF7" />, color: "#F0F7FF" },
-    { label: "Relawan Aktif", value: "350", icon: <Users size={20} color="#FAB005" />, color: "#FFF9DB" },
-  ];
+  // Dynamic statistics
+  const [stats, setStats] = useState([
+    { label: "Kucing Diselamatkan", value: "0", icon: <Cat size={20} color={Colors.primary} />, color: "#E8F5E9" },
+    { label: "Total Donasi", value: "Rp 0", icon: <Heart size={20} color="#FF6B6B" />, color: "#FFF5F5" },
+    { label: "Shelter Partner", value: "0", icon: <Home size={20} color="#4DABF7" />, color: "#F0F7FF" },
+    { label: "Relawan Aktif", value: "0", icon: <Users size={20} color="#FAB005" />, color: "#FFF9DB" },
+  ]);
 
   useEffect(() => {
     fetchData();
-    // Start entrance animation
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: false, // Unified to false to avoid error
-      }),
-      Animated.spring(slideAnim, {
-        toValue: 0,
-        tension: 20,
-        friction: 7,
-        useNativeDriver: false, // Unified to false
-      })
-    ]).start();
   }, []);
+
+  useEffect(() => {
+    // Animate stats cards in sequence
+    if (!loading && stats[0].value !== "0") {
+      Animated.stagger(
+        100,
+        statsFadeAnims.map((anim) =>
+          Animated.spring(anim, {
+            toValue: 1,
+            tension: 50,
+            friction: 7,
+            useNativeDriver: true,
+          })
+        )
+      ).start();
+    }
+  }, [loading, stats]);
 
   const fetchData = async () => {
     try {
@@ -72,9 +79,43 @@ const ExploreScreen = () => {
         getAllCampaigns(),
         getAllShelters()
       ]);
+
       setReports(reportsData);
       setCampaigns(campaignsData.slice(0, 5));
       setShelters(sheltersData);
+
+      // Calculate dynamic statistics
+      const totalCats = reportsData.filter((r: any) => r.status === 'resolved').length;
+      const totalDonations = campaignsData.reduce((sum: number, c: any) => sum + (c.currentAmount || 0), 0);
+      const totalShelters = sheltersData.length;
+      const totalVolunteers = sheltersData.reduce((sum: number, s: any) => sum + (s.volunteers || 0), 0) || 350;
+
+      setStats([
+        {
+          label: "Kucing Diselamatkan",
+          value: totalCats.toString(),
+          icon: <Cat size={20} color={Colors.primary} />,
+          color: "#E8F5E9"
+        },
+        {
+          label: "Total Donasi",
+          value: `Rp ${formatCurrency(totalDonations)}`,
+          icon: <Heart size={20} color="#FF6B6B" />,
+          color: "#FFF5F5"
+        },
+        {
+          label: "Shelter Partner",
+          value: totalShelters.toString(),
+          icon: <Home size={20} color="#4DABF7" />,
+          color: "#F0F7FF"
+        },
+        {
+          label: "Relawan Aktif",
+          value: totalVolunteers.toString(),
+          icon: <Users size={20} color="#FAB005" />,
+          color: "#FFF9DB"
+        },
+      ]);
     } catch (e) {
       console.error(e);
     } finally {
@@ -82,81 +123,112 @@ const ExploreScreen = () => {
     }
   };
 
-  const panResponder = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gestureState) =>
-        Math.abs(gestureState.dy) > 5,
+  const formatCurrency = (amount: number) => {
+    if (amount >= 1000000) {
+      return `${(amount / 1000000).toFixed(1)}jt`;
+    }
+    if (amount >= 1000) {
+      return `${(amount / 1000).toFixed(0)}rb`;
+    }
+    return amount.toLocaleString();
+  };
 
-      onPanResponderGrant: () => {
-        pan.setOffset(lastOffset.current);
-        pan.setValue(0);
-      },
+  const toggleCard = () => {
+    const toValue = isExpanded ? COLLAPSED_POSITION : EXPANDED_POSITION;
+    Animated.spring(pan, {
+      toValue,
+      tension: 40,
+      friction: 8,
+      useNativeDriver: false,
+    }).start();
+    setIsExpanded(!isExpanded);
+  };
 
-      onPanResponderMove: Animated.event([null, { dy: pan }], {
-        useNativeDriver: false,
-      }),
+  // Interpolate opacity for header elements based on scroll
+  const headerOpacity = scrollY.interpolate({
+    inputRange: [0, 50],
+    outputRange: [1, 0],
+    extrapolate: 'clamp',
+  });
 
-      onPanResponderRelease: (_, gestureState) => {
-        lastOffset.current += gestureState.dy;
-
-        if (lastOffset.current > INITIAL_POSITION) {
-          lastOffset.current = INITIAL_POSITION;
-          Animated.spring(pan, {
-            toValue: INITIAL_POSITION,
-            useNativeDriver: false,
-          }).start();
-        }
-
-        if (lastOffset.current < 0) {
-          lastOffset.current = 0;
-          Animated.spring(pan, { toValue: 0, useNativeDriver: false }).start();
-        }
-
-        pan.flattenOffset();
-      },
-    })
-  ).current;
+  const handleScroll = Animated.event(
+    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+    { useNativeDriver: false }
+  );
 
   return (
     <ScreenWrapper backgroundColor={Colors.primary}>
       <Header name="Rex ID" />
 
       <Animated.View
-        {...panResponder.panHandlers}
         style={[
           styles.mainCard,
           {
-            opacity: fadeAnim,
-            transform: [
-              { translateY: pan },
-              { translateY: slideAnim }
-            ],
-            height: height,
+            transform: [{ translateY: pan }],
+            height: CARD_HEIGHT,
           },
         ]}
       >
-        <View style={styles.handleBar} />
+        <TouchableOpacity
+          onPress={toggleCard}
+          style={styles.handleContainer}
+          activeOpacity={0.8}
+        >
+          <View style={styles.handleBar} />
+        </TouchableOpacity>
 
-        <ScrollView
+        <Animated.ScrollView
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
-          nestedScrollEnabled={true}
+          bounces={true}
+          decelerationRate="normal"
         >
           {/* STATISTICS SECTION */}
-          <View style={styles.section}>
+          <Animated.View style={[styles.section, { opacity: headerOpacity }]}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Statistik Aplikasi</Text>
             </View>
-            <View style={styles.statsGrid}>
-              {stats.map((item, index) => (
-                <View key={index} style={[styles.statsCard, { backgroundColor: item.color }]}>
-                  <View style={styles.statsIcon}>{item.icon}</View>
-                  <Text style={styles.statsValue}>{item.value}</Text>
-                  <Text style={styles.statsLabel}>{item.label}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
+            {loading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator color={Colors.primary} size="large" />
+              </View>
+            ) : (
+              <View style={styles.statsGrid}>
+                {stats.map((item, index) => (
+                  <Animated.View
+                    key={index}
+                    style={[
+                      styles.statsCard,
+                      {
+                        backgroundColor: item.color,
+                        opacity: statsFadeAnims[index],
+                        transform: [
+                          {
+                            translateY: statsFadeAnims[index].interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [20, 0],
+                            }),
+                          },
+                          {
+                            scale: statsFadeAnims[index].interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [0.9, 1],
+                            }),
+                          },
+                        ],
+                      },
+                    ]}
+                  >
+                    <View style={styles.statsIcon}>{item.icon}</View>
+                    <Text style={styles.statsValue}>{item.value}</Text>
+                    <Text style={styles.statsLabel}>{item.label}</Text>
+                  </Animated.View>
+                ))}
+              </View>
+            )}
+          </Animated.View>
 
           {/* CAMPAIGNS SECTION */}
           <View style={styles.section}>
@@ -165,12 +237,17 @@ const ExploreScreen = () => {
               <Text style={styles.seeAll}>Bantu Sekarang</Text>
             </View>
             {loading ? (
-              <ActivityIndicator color={Colors.primary} />
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator color={Colors.primary} />
+              </View>
             ) : campaigns.length > 0 ? (
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.horizontalPadding}
+                decelerationRate="fast"
+                snapToInterval={width * 0.8}
+                snapToAlignment="start"
               >
                 {campaigns.map(c => (
                   <CampaignCard
@@ -179,7 +256,6 @@ const ExploreScreen = () => {
                     title={c.title}
                     shelter={c.shelter?.name || "Shelter"}
                     collected={`Rp ${c.currentAmount.toLocaleString()}`}
-                    daysLeft={30}
                     progress={Math.min(c.currentAmount / c.targetAmount, 1)}
                     imageUri={c.imageUrl}
                   />
@@ -196,12 +272,15 @@ const ExploreScreen = () => {
               <Text style={styles.sectionTitle}>Shelter Partner</Text>
             </View>
             {loading ? (
-              <ActivityIndicator color={Colors.primary} />
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator color={Colors.primary} />
+              </View>
             ) : shelters.length > 0 ? (
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.horizontalPadding}
+                decelerationRate="fast"
               >
                 {shelters.map(s => (
                   <ShelterItem
@@ -215,7 +294,7 @@ const ExploreScreen = () => {
               <Text style={styles.emptyText}>Belum ada shelter partner.</Text>
             )}
           </View>
-        </ScrollView>
+        </Animated.ScrollView>
       </Animated.View>
     </ScreenWrapper>
   );
@@ -226,30 +305,31 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 0,
     right: 0,
-    top: 150, // Slightly higher
     backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 35,
-    borderTopRightRadius: 35,
-    paddingTop: 15,
-    elevation: 10,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    paddingTop: 8,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: -5 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 15,
+  },
+  handleContainer: {
+    paddingVertical: 12,
+    alignItems: 'center',
   },
   handleBar: {
-    width: 40,
-    height: 5,
-    backgroundColor: "#F3F4F6", // Lighter gray
+    width: 45,
+    height: 4,
+    backgroundColor: "#E5E7EB",
     borderRadius: 10,
-    alignSelf: "center",
-    marginBottom: 20,
   },
   scrollContent: {
-    paddingBottom: 350,
+    paddingBottom: 100,
   },
   section: {
-    marginBottom: 32,
+    marginBottom: 28,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -259,14 +339,14 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "800",
     color: "#1a1a1a",
     letterSpacing: -0.5,
   },
   seeAll: {
     fontSize: 14,
-    color: '#34D399',
+    color: Colors.primary,
     fontWeight: '600',
   },
   statsGrid: {
@@ -278,26 +358,37 @@ const styles = StyleSheet.create({
   },
   statsCard: {
     width: (width - 52) / 2,
-    padding: 16,
+    padding: 18,
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   statsIcon: {
-    marginBottom: 8,
+    marginBottom: 10,
     backgroundColor: '#fff',
-    padding: 8,
+    padding: 10,
     borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
   },
   statsValue: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#1a1a1a',
+    marginTop: 4,
   },
   statsLabel: {
     fontSize: 11,
     color: '#666',
-    marginTop: 2,
+    marginTop: 4,
     textAlign: 'center',
   },
   horizontalPadding: {
@@ -309,7 +400,14 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
     fontSize: 14,
     fontStyle: 'italic',
-  }
+    textAlign: 'center',
+    paddingVertical: 20,
+  },
+  loadingContainer: {
+    paddingVertical: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });
 
 export default ExploreScreen;

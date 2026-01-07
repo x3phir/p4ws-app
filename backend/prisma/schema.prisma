@@ -111,6 +111,7 @@ model Campaign {
   currentAmount Float          @default(0)
   shelterId     String
   status        CampaignStatus @default(ACTIVE)
+  isUrgent      Boolean        @default(false)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   

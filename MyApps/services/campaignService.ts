@@ -9,12 +9,13 @@ export interface Campaign {
     currentAmount: number;
     shelterId: string;
     status: 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+    isUrgent: boolean;
     shelter?: {
         id: string;
         name: string;
     };
-    createdAt?: Date;
-    updatedAt?: Date;
+    createdAt: string;
+    updatedAt: string;
 }
 
 /**

@@ -83,26 +83,44 @@ exports.createReport = async (req, res) => {
             imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
         }
 
-        const report = await prisma.report.create({
-            data: {
-                userId,
-                location,
-                condition: condition ? condition.toUpperCase() : 'SEHAT',
-                imageUrl,
-                description,
-                shelterId,
-                timeline: {
-                    create: {
-                        activity: 'Laporan Dibuat',
-                        description: 'Laporan kucing terlantar telah diterima sistem',
-                        icon: 'check-circle'
+        const report = await prisma.$transaction(async (tx) => {
+            const newReport = await tx.report.create({
+                data: {
+                    userId,
+                    location,
+                    condition: condition ? condition.toUpperCase() : 'SEHAT',
+                    imageUrl,
+                    description,
+                    shelterId,
+                    timeline: {
+                        create: {
+                            activity: 'Laporan Dibuat',
+                            description: 'Laporan kucing terlantar telah diterima sistem',
+                            icon: 'check-circle'
+                        }
                     }
+                },
+                include: {
+                    shelter: true,
+                    timeline: true
                 }
-            },
-            include: {
-                shelter: true,
-                timeline: true
-            }
+            });
+
+            // Update shelter occupancy
+            await tx.shelter.update({
+                where: { id: shelterId },
+                data: { currentOccupancy: { increment: 1 } }
+            });
+
+            // Create notification for user
+            await notificationController.createNotification(
+                userId,
+                'Laporan Terkirim',
+                `Laporan kucing terlantar di ${location} telah berhasil dibuat.`,
+                'REPORT_CREATED'
+            );
+
+            return newReport;
         });
 
         res.status(201).json(report);

@@ -1,7 +1,14 @@
 import * as Location from "expo-location";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 import CategoryTabs from "@/components/ui/CategoryTabs";
 import PetCard from "@/components/ui/PetCard";
@@ -14,6 +21,10 @@ const AdoptionScreen = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [pets, setPets] = useState<Pet[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const [activeCategory, setActiveCategory] = useState("Semua");
+  const [sortOption, setSortOption] = useState("Terbaru"); // Terbaru, Ras, Nama
+  const [isSortModalVisible, setIsSortModalVisible] = useState(false);
 
   // Logic GPS Real-time (keeping this for address display only, not filtering)
   useEffect(() => {
@@ -55,12 +66,34 @@ const AdoptionScreen = () => {
     fetchPets();
   }, []);
 
-  // Filter logic (simple client-side filtering for now)
-  const filteredPets = pets.filter(pet =>
-    pet.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    pet.breed?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    pet.shelter?.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filter & Sort logic
+  const filteredAndSortedPets = pets
+    .filter(pet => {
+      // Search Query Filter
+      const matchesSearch =
+        pet.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        pet.breed?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        pet.shelter?.name.toLowerCase().includes(searchQuery.toLowerCase());
+
+      // Category Filter (Mocking Kitten & Dewasa based on description/age)
+      let matchesCategory = true;
+      if (activeCategory === "Kitten") {
+        matchesCategory = pet.age?.toLowerCase().includes("bulan") || pet.description.toLowerCase().includes("kecil");
+      } else if (activeCategory === "Dewasa") {
+        matchesCategory = pet.age?.toLowerCase().includes("tahun") || pet.description.toLowerCase().includes("besar");
+      }
+
+      return matchesSearch && matchesCategory;
+    })
+    .sort((a, b) => {
+      if (sortOption === "Nama") {
+        return a.name.localeCompare(b.name);
+      } else if (sortOption === "Ras") {
+        return (a.breed || "").localeCompare(b.breed || "");
+      }
+      // Default: Terbaru (assuming ID or createdAt)
+      return b.id.localeCompare(a.id);
+    });
 
   return (
     <View style={styles.container}>
@@ -68,13 +101,13 @@ const AdoptionScreen = () => {
       <SearchHeader
         location={currentLocation}
         onSearchChange={setSearchQuery}
-        onFilterPress={() => alert("Filter Modal Terbuka!")}
+        onFilterPress={() => setIsSortModalVisible(true)}
       />
 
       {/* 2. Content Wrapper untuk menaikkan Tabs */}
       <View style={styles.contentWrapper}>
         <View style={styles.categoryContainer}>
-          <CategoryTabs />
+          <CategoryTabs onSelect={setActiveCategory} active={activeCategory} />
         </View>
 
         {/* 3. Area Scroll list pet */}
@@ -86,15 +119,15 @@ const AdoptionScreen = () => {
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#AEE637" />
             </View>
-          ) : filteredPets.length > 0 ? (
-            filteredPets.map((pet) => (
+          ) : filteredAndSortedPets.length > 0 ? (
+            filteredAndSortedPets.map((pet) => (
               <PetCard
                 key={pet.id}
                 name={pet.name}
                 breed={pet.breed || "Unknown"}
                 location={pet.shelter?.address.split(',')[0] || "Shelter"} // Show shelter city/address
                 imageUri={pet.imageUrl}
-                onPress={() => router.push(`/adopt/${pet.id}` as any)}
+                onPress={() => router.push(`/ adopt / ${pet.id} ` as any)}
               />
             ))
           ) : (
@@ -104,6 +137,33 @@ const AdoptionScreen = () => {
           )}
         </ScrollView>
       </View>
+
+      {/* Sort Modal (Simple implementation) */}
+      {isSortModalVisible && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Urutkan Berdasarkan</Text>
+            {["Terbaru", "Nama", "Ras"].map(option => (
+              <TouchableOpacity
+                key={option}
+                style={styles.modalOption}
+                onPress={() => {
+                  setSortOption(option);
+                  setIsSortModalVisible(false);
+                }}
+              >
+                <Text style={[styles.modalOptionText, sortOption === option && styles.activeModalOptionText]}>{option}</Text>
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity
+              style={styles.closeModalBtn}
+              onPress={() => setIsSortModalVisible(false)}
+            >
+              <Text style={styles.closeModalText}>Tutup</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
     </View>
   );
 };
@@ -143,6 +203,49 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     width: "100%",
+  },
+  modalOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  modalContent: {
+    width: '80%',
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 24,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  modalOption: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  modalOptionText: {
+    fontSize: 16,
+    color: '#4B5563',
+  },
+  activeModalOptionText: {
+    color: '#AEE637',
+    fontWeight: 'bold',
+  },
+  closeModalBtn: {
+    marginTop: 16,
+    paddingVertical: 10,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  closeModalText: {
+    color: '#4B5563',
+    fontWeight: '600',
   },
 });
 

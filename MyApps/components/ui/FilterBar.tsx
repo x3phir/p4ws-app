@@ -2,14 +2,19 @@ import { Feather } from "@expo/vector-icons"; // Tambah ikon biar cakep
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-const FilterBar = () => {
+interface FilterBarProps {
+  onSortPress: () => void;
+  onFilterPress: () => void;
+}
+
+const FilterBar = ({ onSortPress, onFilterPress }: FilterBarProps) => {
   return (
     <View style={styles.container}>
       {/* Tombol Urutkan */}
       <TouchableOpacity
         style={[styles.button, styles.borderRight]}
         activeOpacity={0.7}
-        onPress={() => console.log("Urutkan ditekan")}
+        onPress={onSortPress}
       >
         <Feather name="list" size={16} color="#374151" style={styles.icon} />
         <Text style={styles.buttonText}>Urutkan</Text>
@@ -19,7 +24,7 @@ const FilterBar = () => {
       <TouchableOpacity
         style={styles.button}
         activeOpacity={0.7}
-        onPress={() => console.log("Filter ditekan")}
+        onPress={onFilterPress}
       >
         <Feather name="sliders" size={16} color="#374151" style={styles.icon} />
         <Text style={styles.buttonText}>Filter</Text>

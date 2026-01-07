@@ -16,9 +16,6 @@ const LocationHeader = ({ location }: LocationHeaderProps) => (
       </View>
     </View>
 
-    <TouchableOpacity style={styles.notificationButton} activeOpacity={0.7}>
-      <Bell color="black" size={20} />
-    </TouchableOpacity>
   </View>
 );
 

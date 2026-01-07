@@ -7,7 +7,6 @@ interface CampaignProps {
   title: string;
   shelter: string;
   collected: string;
-  daysLeft: number;
   imageUri: string;
   progress: number;
 }
@@ -17,7 +16,6 @@ const CampaignCard = ({
   title,
   shelter,
   collected,
-  daysLeft,
   imageUri,
   progress,
 }: CampaignProps) => {
@@ -63,10 +61,6 @@ const CampaignCard = ({
               />
             </View>
           </View>
-
-          <Text style={styles.daysLeftText}>
-            Sisa Hari : <Text style={styles.boldBlack}>{daysLeft}</Text>
-          </Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -135,11 +129,6 @@ const styles = StyleSheet.create({
     height: "100%",
     backgroundColor: "#22C55E",
     borderRadius: 10,
-  },
-  daysLeftText: {
-    fontSize: 10,
-    color: "#9CA3AF",
-    marginLeft: 16,
   },
 });
 
