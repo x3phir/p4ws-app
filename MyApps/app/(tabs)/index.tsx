@@ -1,11 +1,14 @@
 import { getAllCampaigns } from "@/services/campaignService";
 import { getAllReports } from "@/services/reportService";
 import { getAllShelters } from "@/services/shelterService";
+import { getAllPets, Pet } from "@/services/petService";
+import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
   Dimensions,
+  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -13,7 +16,8 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { Colors } from "@/constants/theme";
-import { Cat, Heart, Home, Users } from "lucide-react-native";
+import { Cat, Heart, Home, Users, Search, PawPrint } from "lucide-react-native";
+import { getImageUrl } from "@/utils/urlHelper";
 
 // Import Components
 import CampaignCard from "@/components/ui/CampaignCard";
@@ -24,9 +28,10 @@ import ShelterItem from "@/components/ui/ShelterItem";
 const { height, width } = Dimensions.get("window");
 
 const ExploreScreen = () => {
-  const CARD_HEIGHT = height - 100;
-  const COLLAPSED_POSITION = height - 230;
-  const EXPANDED_POSITION = 190;
+  const router = useRouter();
+  const CARD_HEIGHT = height - 130;
+  const COLLAPSED_POSITION = height - 600;
+  const EXPANDED_POSITION = 170;
 
   const pan = useRef(new Animated.Value(COLLAPSED_POSITION)).current;
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -40,6 +45,7 @@ const ExploreScreen = () => {
   const [reports, setReports] = useState<any[]>([]);
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [shelters, setShelters] = useState<any[]>([]);
+  const [pets, setPets] = useState<Pet[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Dynamic statistics
@@ -56,7 +62,7 @@ const ExploreScreen = () => {
 
   useEffect(() => {
     // Animate stats cards in sequence
-    if (!loading && stats[0].value !== "0") {
+    if (!loading) {
       Animated.stagger(
         100,
         statsFadeAnims.map((anim) =>
@@ -74,18 +80,22 @@ const ExploreScreen = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [reportsData, campaignsData, sheltersData] = await Promise.all([
+      const [reportsData, campaignsData, sheltersData, petsData] = await Promise.all([
         getAllReports(),
         getAllCampaigns(),
-        getAllShelters()
+        getAllShelters(),
+        getAllPets({ status: 'AVAILABLE' })
       ]);
 
       setReports(reportsData);
       setCampaigns(campaignsData.slice(0, 5));
       setShelters(sheltersData);
+      setPets(petsData.slice(0, 5));
 
       // Calculate dynamic statistics
-      const totalCats = reportsData.filter((r: any) => r.status === 'resolved').length;
+      const totalCats = reportsData.filter((r: any) =>
+        r.status === 'COMPLETED' || r.status === 'resolved'
+      ).length;
       const totalDonations = campaignsData.reduce((sum: number, c: any) => sum + (c.currentAmount || 0), 0);
       const totalShelters = sheltersData.length;
       const totalVolunteers = sheltersData.reduce((sum: number, s: any) => sum + (s.volunteers || 0), 0) || 350;
@@ -160,6 +170,12 @@ const ExploreScreen = () => {
     <ScreenWrapper backgroundColor={Colors.primary}>
       <Header name="Rex ID" />
 
+      {/* Background decoration - Simplified */}
+      <View style={styles.headerDecoration}>
+        <PawPrint size={100} color="rgba(255,255,255,0.1)" style={{ position: 'absolute', top: 20, right: -20, transform: [{ rotate: '15deg' }] }} />
+        <View style={styles.bubble1} />
+      </View>
+
       <Animated.View
         style={[
           styles.mainCard,
@@ -185,8 +201,78 @@ const ExploreScreen = () => {
           bounces={true}
           decelerationRate="normal"
         >
+          {/* PET CAROUSEL SECTION (NEW) */}
+          <View style={styles.carouselContainer}>
+            <View style={styles.carouselHeader}>
+              <View>
+                <Text style={styles.carouselTitle}>Kucing Gemas Menunggumu</Text>
+                <Text style={styles.carouselSubtitle}>Siap diadopsi & cari rumah baru 🏠</Text>
+              </View>
+              <TouchableOpacity onPress={() => router.push('/adopt' as any)}>
+                <Text style={styles.seeAll}>Semua</Text>
+              </TouchableOpacity>
+            </View>
+
+            {loading ? (
+              <View style={[styles.loadingContainer, { height: 180 }]}>
+                <ActivityIndicator color={Colors.primary} />
+              </View>
+            ) : (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.horizontalPadding}
+                decelerationRate="fast"
+                snapToInterval={width * 0.7 + 16}
+                snapToAlignment="start"
+              >
+                {pets.map(pet => (
+                  <TouchableOpacity
+                    key={pet.id}
+                    style={styles.petSlide}
+                    activeOpacity={0.9}
+                    onPress={() => router.push(`/adopt/${pet.id}` as any)}
+                  >
+                    <Image
+                      source={{ uri: getImageUrl(pet.imageUrl) }}
+                      style={styles.petSlideImage}
+                    />
+                    <View style={styles.petSlideInfo}>
+                      <Text style={styles.petSlideName}>{pet.name}</Text>
+                      <View style={styles.petSlideTag}>
+                        <Text style={styles.petSlideTagText}>{pet.gender}</Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
+          </View>
+
+          {/* QUICK ACTIONS MOVED INSIDE CARD */}
+          <View style={styles.cardActions}>
+            <TouchableOpacity style={styles.actionBox} onPress={() => router.push('/lapor' as any)}>
+              <View style={[styles.actionIconBg, { backgroundColor: '#E8F5E9' }]}>
+                <Search size={24} color="#2E7D32" />
+              </View>
+              <Text style={styles.actionBoxText}>Lapor</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionBox} onPress={() => router.push('/adopt' as any)}>
+              <View style={[styles.actionIconBg, { backgroundColor: '#F3E5F5' }]}>
+                <Cat size={24} color="#7B1FA2" />
+              </View>
+              <Text style={styles.actionBoxText}>Adopsi</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionBox} onPress={() => router.push('/donation' as any)}>
+              <View style={[styles.actionIconBg, { backgroundColor: '#FFF3E0' }]}>
+                <Heart size={24} color="#E65100" />
+              </View>
+              <Text style={styles.actionBoxText}>Donasi</Text>
+            </TouchableOpacity>
+          </View>
+
           {/* STATISTICS SECTION */}
-          <Animated.View style={[styles.section, { opacity: headerOpacity }]}>
+          <Animated.View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Statistik Aplikasi</Text>
             </View>
@@ -257,7 +343,7 @@ const ExploreScreen = () => {
                     shelter={c.shelter?.name || "Shelter"}
                     collected={`Rp ${c.currentAmount.toLocaleString()}`}
                     progress={Math.min(c.currentAmount / c.targetAmount, 1)}
-                    imageUri={c.imageUrl}
+                    imageUri={getImageUrl(c.imageUrl)}
                   />
                 ))}
               </ScrollView>
@@ -286,7 +372,7 @@ const ExploreScreen = () => {
                   <ShelterItem
                     key={s.id}
                     name={s.name}
-                    imageUri={s.imageUrl}
+                    imageUri={getImageUrl(s.imageUrl)}
                   />
                 ))}
               </ScrollView>
@@ -395,6 +481,98 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     gap: 16,
   },
+  carouselContainer: {
+    paddingBottom: 20,
+  },
+  carouselHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    paddingHorizontal: 24,
+    marginBottom: 16,
+  },
+  carouselTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#1a1a1a',
+  },
+  carouselSubtitle: {
+    fontSize: 13,
+    color: '#666',
+    marginTop: 2,
+  },
+  petSlide: {
+    width: width * 0.7,
+    marginRight: 16,
+    borderRadius: 25,
+    overflow: 'hidden',
+    backgroundColor: '#fff',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+  },
+  petSlideImage: {
+    width: '100%',
+    height: 180,
+    resizeMode: 'cover',
+  },
+  petSlideInfo: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 15,
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  petSlideName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1a1a1a',
+  },
+  petSlideTag: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  petSlideTagText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#1a1a1a',
+  },
+  cardActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    marginBottom: 28,
+  },
+  actionBox: {
+    alignItems: 'center',
+    width: (width - 72) / 3,
+  },
+  actionIconBg: {
+    width: 60,
+    height: 60,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+  },
+  actionBoxText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#4B5563',
+  },
   emptyText: {
     marginHorizontal: 24,
     color: '#9CA3AF',
@@ -404,9 +582,104 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   },
   loadingContainer: {
-    paddingVertical: 40,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  headerDecoration: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 300,
+    zIndex: 0,
+  },
+  paw1: {
+    position: 'absolute',
+    top: 80,
+    right: -20,
+    transform: [{ rotate: '25deg' }],
+  },
+  paw2: {
+    position: 'absolute',
+    top: 150,
+    left: 10,
+    transform: [{ rotate: '-15deg' }],
+  },
+  paw3: {
+    position: 'absolute',
+    top: 120,
+    right: 80,
+    transform: [{ rotate: '45deg' }],
+  },
+  bubble1: {
+    position: 'absolute',
+    top: -50,
+    left: -50,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+  },
+  bubble2: {
+    position: 'absolute',
+    bottom: 50,
+    right: -30,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  heroTextContainer: {
+    paddingHorizontal: 24,
+    marginTop: 0,
+    marginBottom: 20,
+    zIndex: 1,
+  },
+  heroTitle: {
+    fontSize: 34,
+    fontWeight: '900',
+    color: '#1a1a1a',
+    letterSpacing: -1,
+  },
+  heroSubtitle: {
+    fontSize: 16,
+    color: 'rgba(0,0,0,0.6)',
+    marginTop: 4,
+    fontWeight: '500',
+    maxWidth: '80%',
+  },
+  searchBarMock: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.5)',
+    marginTop: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  searchPlaceholder: {
+    marginLeft: 10,
+    color: 'rgba(0,0,0,0.4)',
+    fontWeight: '500',
+    fontSize: 14,
+  },
+  quickActions: {
+    flexDirection: 'row',
+    marginTop: 15,
+    gap: 10,
+  },
+  actionChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#1a1a1a',
+    borderRadius: 12,
+  },
+  actionChipText: {
+    color: '#AEE637',
+    fontWeight: 'bold',
+    fontSize: 13,
   },
 });
 

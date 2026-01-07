@@ -9,8 +9,10 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api';
 export const getImageUrl = (path: string | null | undefined): string => {
     if (!path) return 'https://via.placeholder.com/400x300?text=No+Image';
 
-    // If it's already a full URL (but not localhost), return it
-    if (path.startsWith('http') && !path.includes('localhost') && !path.includes('127.0.0.1')) {
+    // If it's already a full URL (but not localhost), or a local file/data URI, return it
+    if ((path.startsWith('http') && !path.includes('localhost') && !path.includes('127.0.0.1')) ||
+        path.startsWith('file://') ||
+        path.startsWith('data:')) {
         return path;
     }
 

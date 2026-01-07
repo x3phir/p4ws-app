@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router"; // Import router
 import React from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { getImageUrl } from "@/utils/urlHelper";
 
 interface ShelterItemProps {
   name: string;
@@ -25,7 +26,7 @@ const ShelterItem = ({ name, imageUri }: ShelterItemProps) => {
       {/* Container Gambar dengan Border Radius Eksplisit */}
       <View style={styles.imageWrapper}>
         <Image
-          source={{ uri: imageUri }}
+          source={{ uri: getImageUrl(imageUri) }}
           style={styles.image}
           resizeMode="cover"
         />

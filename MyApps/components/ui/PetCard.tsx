@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { getImageUrl } from "@/utils/urlHelper";
 
 const { width } = Dimensions.get("window");
 const cardWidth = (width - 64) / 2; // Menghitung lebar 2 kolom dengan gap
@@ -15,7 +16,7 @@ const cardWidth = (width - 64) / 2; // Menghitung lebar 2 kolom dengan gap
 const PetCard = ({ name, breed, location, imageUri, onPress }: any) => {
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.9}>
-      <Image source={{ uri: imageUri }} style={styles.image} />
+      <Image source={{ uri: getImageUrl(imageUri) }} style={styles.image} />
       <View style={styles.info}>
         <Text style={styles.name}>{name}</Text>
         <Text style={styles.breed}>{breed}</Text>

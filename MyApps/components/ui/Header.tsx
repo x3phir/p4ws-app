@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useRouter } from "expo-router";
 import { getNotifications } from "@/services/notificationService";
+import { getUserProfile } from "@/services/userService";
 import { Colors } from "@/constants/theme";
 
 interface HeaderProps {
@@ -11,15 +12,30 @@ interface HeaderProps {
 
 import { useNotifications } from "@/context/NotificationContext";
 
-const Header = ({ name }: HeaderProps) => {
+const Header = ({ name: defaultName }: HeaderProps) => {
   const router = useRouter();
   const { unreadCount } = useNotifications();
+  const [displayName, setDisplayName] = useState(defaultName);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const profile = await getUserProfile();
+        if (profile?.name) {
+          setDisplayName(profile.name.split(" ")[0]); // Only first name
+        }
+      } catch (e) {
+        // Fallback to defaultName
+      }
+    };
+    fetchUser();
+  }, []);
 
   return (
     <View style={styles.headerWrapper}>
       <View style={styles.topRow}>
         <View>
-          <Text style={styles.welcomeText}>Hello, {name}!</Text>
+          <Text style={styles.welcomeText}>Hello, {displayName}!</Text>
           <Text style={styles.subText}>Ready to help some cats? 🐾</Text>
         </View>
 
@@ -42,7 +58,7 @@ const Header = ({ name }: HeaderProps) => {
 
 const styles = StyleSheet.create({
   headerWrapper: {
-    paddingTop: 60,
+    paddingTop: 20,
     paddingBottom: 30,
     paddingHorizontal: 24,
     borderBottomLeftRadius: 30,

@@ -78,9 +78,9 @@ const AdoptionScreen = () => {
       // Category Filter (Mocking Kitten & Dewasa based on description/age)
       let matchesCategory = true;
       if (activeCategory === "Kitten") {
-        matchesCategory = pet.age?.toLowerCase().includes("bulan") || pet.description.toLowerCase().includes("kecil");
+        matchesCategory = !!pet.age?.toLowerCase().includes("bulan");
       } else if (activeCategory === "Dewasa") {
-        matchesCategory = pet.age?.toLowerCase().includes("tahun") || pet.description.toLowerCase().includes("besar");
+        matchesCategory = !!pet.age?.toLowerCase().includes("tahun");
       }
 
       return matchesSearch && matchesCategory;
@@ -127,7 +127,7 @@ const AdoptionScreen = () => {
                 breed={pet.breed || "Unknown"}
                 location={pet.shelter?.address.split(',')[0] || "Shelter"} // Show shelter city/address
                 imageUri={pet.imageUrl}
-                onPress={() => router.push(`/ adopt / ${pet.id} ` as any)}
+                onPress={() => router.push(`/adopt/${pet.id}` as any)}
               />
             ))
           ) : (

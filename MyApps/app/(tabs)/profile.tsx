@@ -8,7 +8,7 @@ import { getUserProfile, updateProfile, UserProfile } from "@/services/userServi
 import { CatReport, getMyReports } from "@/services/reportService";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
-import { Camera, Edit, Shield, ShieldCheck, LogOut } from "lucide-react-native";
+import { Camera, Edit, Shield, ShieldCheck, LogOut, Pencil } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -22,7 +22,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { useAuth } from "../../context/AuthContext";
 
@@ -228,7 +228,7 @@ const ProfileScreen = () => {
   return (
     <ScreenWrapper backgroundColor={Colors.primary}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Profil Saya</Text>
+        <Text style={styles.headerTitle}>Profi Saya</Text>
         <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
           <LogOut size={20} color="#EF4444" />
         </TouchableOpacity>
@@ -255,6 +255,11 @@ const ProfileScreen = () => {
                 <Camera size={16} color="white" />
               </TouchableOpacity>
             </View>
+            <View style={styles.editProfileBtn}>
+              <TouchableOpacity onPress={handleEditProfile}>
+                <Pencil size={20} color="black" style={[styles.tab]} />
+              </TouchableOpacity>
+            </View>
 
             <View style={styles.profileInfo}>
               <Text style={styles.userName}>{profile?.name}</Text>
@@ -265,26 +270,6 @@ const ProfileScreen = () => {
             </View>
 
             {renderVerificationBadge()}
-
-            <View style={styles.buttonRow}>
-              <TouchableOpacity
-                style={styles.editProfileBtn}
-                onPress={handleEditProfile}
-              >
-                <Edit size={18} color="#1A1A1A" />
-                <Text style={styles.editProfileText}>Edit Profil</Text>
-              </TouchableOpacity>
-
-              {(profile?.role === 'ADMIN' || true) && (
-                <TouchableOpacity
-                  style={[styles.editProfileBtn, { backgroundColor: '#1A1A1A' }]}
-                  onPress={() => router.push('/admin/verify' as any)}
-                >
-                  <ShieldCheck size={18} color="#AEE637" />
-                  <Text style={[styles.editProfileText, { color: '#AEE637' }]}>Admin</Text>
-                </TouchableOpacity>
-              )}
-            </View>
           </View>
 
           {/* Tabs */}
@@ -315,6 +300,39 @@ const ProfileScreen = () => {
                         {renderStatusBadge(item.status)}
                       </View>
                       <Text style={styles.shelterName}>📍 {item.pet?.shelter?.name}</Text>
+
+                      {/* Hanya tampilkan adminNote jika status APPROVED dan ada adminNote */}
+                      {item.status === "APPROVED" && item.adminNote ? (
+                        <View style={styles.noteContainer}>
+                          <Text style={styles.noteLabel}>Catatan Persetujuan:</Text>
+                          <Text style={styles.noteText}>{item.adminNote}</Text>
+                        </View>
+                      ) : null}
+
+                      {/* Untuk status lain, bisa tampilkan pesan khusus jika perlu */}
+                      {item.status === "REJECTED" && (
+                        <Text style={[styles.shelterName, { color: "#DC2626", marginTop: 4 }]}>
+                          ❌ Permintaan ditolak
+                        </Text>
+                      )}
+
+                      {item.status === "COMPLETED" && (
+                        <Text style={[styles.shelterName, { color: "#059669", marginTop: 4 }]}>
+                          ✅ Adopsi selesai
+                        </Text>
+                      )}
+
+                      {item.status === "CANCELLED" && (
+                        <Text style={[styles.shelterName, { color: "#6B7280", marginTop: 4 }]}>
+                          ⏹️ Dibatalkan
+                        </Text>
+                      )}
+
+                      {item.status === "PENDING" && (
+                        <Text style={[styles.shelterName, { color: "#F59E0B", marginTop: 4 }]}>
+                          ⏳ Menunggu persetujuan admin
+                        </Text>
+                      )}
                     </View>
                   </View>
                 ))
@@ -508,6 +526,24 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     borderWidth: 1,
     borderColor: "#F3F4F6",
+  },
+  noteContainer: {
+    marginTop: 8,
+    padding: 8,
+    backgroundColor: '#fccbbfff',
+    borderRadius: 8,
+    borderLeftColor: Colors.primary,
+  },
+  noteLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#000000ff',
+    marginBottom: 2,
+  },
+  noteText: {
+    fontSize: 12,
+    color: '#374151',
+    fontStyle: 'italic',
   },
   petImage: { width: 80, height: 80, borderRadius: 15, backgroundColor: "#F3F4F6" },
   cardContent: { flex: 1, marginLeft: 16, justifyContent: 'center' },

@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { getImageUrl } from "@/utils/urlHelper";
 
 const { width } = Dimensions.get("window");
 
@@ -29,7 +30,7 @@ const PetDetailHeader = ({
   return (
     <View style={styles.container}>
       <Image
-        source={{ uri: imageUri }}
+        source={{ uri: getImageUrl(imageUri) }}
         style={styles.mainImage}
         resizeMode="cover"
       />

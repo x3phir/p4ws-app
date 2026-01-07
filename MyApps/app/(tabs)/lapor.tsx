@@ -19,6 +19,7 @@ import ShelterSelector from "@/components/ui/ShelterSelector";
 import { Shelter, CatCondition } from "@/types/report.types";
 import { getAllShelters } from "@/services/shelterService";
 import { createReport } from "@/services/reportService";
+import { getUserProfile } from "@/services/userService";
 import { Colors } from "@/constants/theme";
 import Header from "@/components/ui/Header";
 import ScreenWrapper from "@/components/ui/ScreenWrapper";
@@ -143,14 +144,13 @@ export default function Lapor() {
 
   return (
     <ScreenWrapper backgroundColor={Colors.primary}>
-      <Header name="Lapor" />
+      <Header />
 
       <View style={styles.contentCard}>
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 150 }}
         >
-          <LaporHeader />
 
           <View style={styles.formContainer}>
             {/* 1. LOKASI */}
