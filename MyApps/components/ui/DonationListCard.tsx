@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
 import React from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { getImageUrl } from "@/utils/urlHelper";
 
 interface DonationListProps {
   id: string;
@@ -35,7 +36,7 @@ const DonationListCard = ({
       {/* Thumbnail Gambar */}
       <View style={styles.imageWrapper}>
         <Image
-          source={{ uri: imageUri || "https://via.placeholder.com/150" }}
+          source={{ uri: getImageUrl(imageUri) }}
           style={styles.image}
           resizeMode="cover"
         />

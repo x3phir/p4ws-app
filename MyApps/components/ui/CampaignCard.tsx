@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router"; // 1. Import router
 import React from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { getImageUrl } from "@/utils/urlHelper";
 
 interface CampaignProps {
   id: string; // 2. Tambahkan id agar bisa navigasi
@@ -35,7 +36,7 @@ const CampaignCard = ({
     >
       {/* Gambar Campaign */}
       <Image
-        source={{ uri: imageUri }}
+        source={{ uri: getImageUrl(imageUri) }}
         style={styles.bannerImage}
         resizeMode="cover"
       />

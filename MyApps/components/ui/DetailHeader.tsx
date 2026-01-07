@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { getImageUrl } from "@/utils/urlHelper";
 
 const { width } = Dimensions.get("window");
 
@@ -23,7 +24,7 @@ const DetailHeader = ({ imageUri }: DetailHeaderProps) => {
     <View style={styles.container}>
       {/* Background Image Utama */}
       <Image
-        source={{ uri: imageUri }}
+        source={{ uri: getImageUrl(imageUri) }}
         style={styles.backgroundImage}
         resizeMode="cover"
       />
