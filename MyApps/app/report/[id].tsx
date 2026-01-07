@@ -56,7 +56,8 @@ export default function ReportDetail() {
     };
 
     const getConditionColor = (condition: string) => {
-        switch (condition) {
+        const cond = condition.toLowerCase();
+        switch (cond) {
             case "sehat":
                 return "#32CD32";
             case "terluka":
@@ -124,10 +125,10 @@ export default function ReportDetail() {
                 <Text style={styles.reportId}>ID: {report.id}</Text>
 
                 {/* Cat Photo */}
-                {report.imageUri && (
+                {(report.imageUrl || report.imageUri) && (
                     <View style={styles.imageContainer}>
                         <Image
-                            source={{ uri: report.imageUri }}
+                            source={{ uri: report.imageUrl || report.imageUri }}
                             style={styles.catImage}
                             resizeMode="cover"
                         />

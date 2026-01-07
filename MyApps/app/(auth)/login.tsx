@@ -1,4 +1,4 @@
-import { useAuth } from "@/app/context/AuthContext";
+import { useAuth } from "@/context/AuthContext";
 import PawsHeader from "@/components/ui/PawsHeader";
 import { login as loginAPI } from "@/services/authService";
 import { useRouter } from "expo-router";

@@ -1,7 +1,7 @@
 import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect, useState } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { AuthProvider, useAuth } from "./context/AuthContext"; // Import ini
+import { AuthProvider, useAuth } from "../context/AuthContext";
 
 function RootLayoutNav() {
   const { isLoggedIn } = useAuth(); // Ambil status login dari context
@@ -36,12 +36,16 @@ function RootLayoutNav() {
   );
 }
 
+import { NotificationProvider } from "../context/NotificationContext";
+
 // Wrapper utama
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <RootLayoutNav />
+        <NotificationProvider>
+          <RootLayoutNav />
+        </NotificationProvider>
       </AuthProvider>
     </SafeAreaProvider>
   );

@@ -1,5 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const notificationController = require('./notificationController');
 
 exports.createDonation = async (req, res) => {
     try {
@@ -27,6 +28,14 @@ exports.createDonation = async (req, res) => {
                 status: 'PENDING'
             }
         });
+
+        // Create notification for user
+        await notificationController.createNotification(
+            userId,
+            'Donasi Terkirim',
+            `Donasi Anda sebesar Rp ${parseFloat(amount).toLocaleString()} telah terkirim dan sedang menunggu verifikasi.`,
+            'DONATION_CREATED'
+        );
 
         res.status(201).json(donation);
     } catch (error) {
@@ -99,6 +108,16 @@ exports.updateStatus = async (req, res) => {
                 }
             });
         }
+
+        // Create notification for user
+        await notificationController.createNotification(
+            donation.userId,
+            status === 'VERIFIED' ? 'Donasi Terverifikasi' : 'Donasi Ditolak',
+            status === 'VERIFIED'
+                ? `Donasi Anda sebesar Rp ${donation.amount.toLocaleString()} telah terverifikasi. Terima kasih!`
+                : `Maaf, donasi Anda tidak dapat kami verifikasi.`,
+            'DONATION_UPDATE'
+        );
 
         res.json(donation);
     } catch (error) {

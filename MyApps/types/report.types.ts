@@ -7,7 +7,7 @@ export enum ReportStatus {
     CANCELLED = "CANCELLED",
 }
 
-export type CatCondition = "sehat" | "terluka" | "sakit";
+export type CatCondition = "SEHAT" | "TERLUKA" | "SAKIT";
 
 export interface Shelter {
     id: string;
@@ -24,7 +24,7 @@ export interface Shelter {
 
 export interface TimelineEntry {
     id: string;
-    timestamp: Date;
+    createdAt: Date;
     activity: string;
     description?: string;
     icon?: string;
@@ -34,7 +34,8 @@ export interface CatReport {
     id: string;
     location: string;
     condition: CatCondition;
-    imageUri?: string;
+    imageUri?: string; // Keep this for local URI if needed, but the server returns imageUrl
+    imageUrl?: string;
     description: string;
     shelter: Shelter;
     status: ReportStatus;

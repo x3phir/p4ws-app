@@ -14,13 +14,17 @@ const storage = multer.diskStorage({
 
 // File filter
 const fileFilter = (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png|gif/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
+    const allowedExtensions = /jpeg|jpg|png|gif/;
+    const extname = allowedExtensions.test(path.extname(file.originalname).toLowerCase());
+    const isImageMime = file.mimetype.startsWith('image/');
 
-    if (extname && mimetype) {
+    if (extname || isImageMime) {
         return cb(null, true);
     } else {
+        console.error('File upload rejected:', {
+            filename: file.originalname,
+            mimetype: file.mimetype
+        });
         cb(new Error('Only image files are allowed!'));
     }
 };

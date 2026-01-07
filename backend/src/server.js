@@ -26,6 +26,8 @@ app.use('/api/reports', require('./routes/reports'));
 app.use('/api/campaigns', require('./routes/campaigns'));
 app.use('/api/adoptions', require('./routes/adoptions'));
 app.use('/api/donations', require('./routes/donations'));
+app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/users', require('./routes/users'));
 
 // Upload endpoint
 app.post('/api/upload', upload.single('image'), (req, res) => {

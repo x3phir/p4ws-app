@@ -1,4 +1,5 @@
 const prisma = require('../config/database');
+const notificationController = require('./notificationController');
 
 // Get all reports
 exports.getAllReports = async (req, res) => {
@@ -74,14 +75,19 @@ exports.getReportById = async (req, res) => {
 // Create report
 exports.createReport = async (req, res) => {
     try {
-        const { location, condition, imageUrl, description, shelterId } = req.body;
+        const { location, condition, description, shelterId } = req.body;
         const userId = req.user.id;
+
+        let imageUrl = req.body.imageUrl;
+        if (req.file) {
+            imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+        }
 
         const report = await prisma.report.create({
             data: {
                 userId,
                 location,
-                condition,
+                condition: condition ? condition.toUpperCase() : 'SEHAT',
                 imageUrl,
                 description,
                 shelterId,
@@ -131,6 +137,14 @@ exports.updateReportStatus = async (req, res) => {
             }
         });
 
+        // Create notification for user
+        await notificationController.createNotification(
+            report.userId,
+            'Update Status Laporan',
+            activity || `Laporan Anda telah diperbarui menjadi: ${status}`,
+            'REPORT_UPDATE'
+        );
+
         res.json(report);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -151,6 +165,21 @@ exports.addTimelineEntry = async (req, res) => {
                 icon
             }
         });
+
+        // Get report to find userId
+        const report = await prisma.report.findUnique({
+            where: { id },
+            select: { userId: true }
+        });
+
+        if (report) {
+            await notificationController.createNotification(
+                report.userId,
+                'Update Timeline Laporan',
+                activity,
+                'REPORT_UPDATE'
+            );
+        }
 
         res.status(201).json(timeline);
     } catch (error) {

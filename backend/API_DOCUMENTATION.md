@@ -19,6 +19,7 @@ Authorization: Bearer <your_token>
 - [Pets](#pet-endpoints)
 - [Reports](#report-endpoints)
 - [Campaigns](#campaign-endpoints)
+- [Notifications](#notification-endpoints)
 - [Upload](#upload-endpoint)
 
 ---
@@ -292,18 +293,16 @@ Authorization: Bearer <your_token>
 ### Create Report
 **POST** `/reports`
 
-**Headers:** `Authorization: Bearer <token>`
+**Headers:** 
+- `Authorization: Bearer <token>`
+- `Content-Type: multipart/form-data`
 
-**Request Body:**
-```json
-{
-  "location": "Jl. Sudirman No. 45, Jakarta",
-  "condition": "TERLUKA",
-  "imageUrl": "https://...",
-  "description": "Kucing terluka di jalan",
-  "shelterId": "shelter-uuid"
-}
-```
+**Form Data:**
+- `location`: string (e.g. "Jl. Sudirman No. 45")
+- `condition`: 'SEHAT' | 'TERLUKA' | 'SAKIT'
+- `description`: string (optional)
+- `shelterId`: string (UUID)
+- `image`: File (optional, max 5MB)
 
 **Response:** Report object with initial timeline entry
 
@@ -316,8 +315,6 @@ Authorization: Bearer <your_token>
 ```json
 {
   "status": "PROCESSING",
-  "activity": "Laporan sedang diproses",
-  "description": "Tim rescue sedang menuju lokasi"
 }
 ```
 
@@ -490,6 +487,44 @@ Authorization: Bearer <your_token>
 
 ---
 
+## Notification Endpoints
+
+### Get All Notifications
+**GET** `/notifications`
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+[
+  {
+    "id": "uuid",
+    "title": "Update Status Laporan",
+    "message": "Laporan Anda telah diperbarui menjadi: PROCESSING",
+    "type": "REPORT_UPDATE",
+    "isRead": false,
+    "createdAt": "2024-01-01T00:00:00.000Z"
+  }
+]
+```
+
+### Mark as Read
+**PUT** `/notifications/:id/read`
+
+**Headers:** `Authorization: Bearer <token>`
+
+### Mark All as Read
+**PUT** `/notifications/read-all`
+
+**Headers:** `Authorization: Bearer <token>`
+
+### Delete Notification
+**DELETE** `/notifications/:id`
+
+**Headers:** `Authorization: Bearer <token>`
+
+---
+
 ## Upload Endpoint
 
 ### Upload Image
@@ -614,6 +649,19 @@ All endpoints may return error responses in this format:
   status: 'ACTIVE' | 'COMPLETED' | 'CANCELLED'
   createdAt: Date
   updatedAt: Date
+}
+```
+
+### Notification
+```typescript
+{
+  id: string
+  userId: string
+  title: string
+  message: string
+  type?: string
+  isRead: boolean
+  createdAt: Date
 }
 ```
 

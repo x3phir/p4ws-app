@@ -9,6 +9,10 @@ const tintColorLight = '#0a7ea4';
 const tintColorDark = '#fff';
 
 export const Colors = {
+  primary: '#AEE637',
+  background: '#F5EFE6', // Light beige from design
+  card: '#FFFFFF',
+  text: '#11181C',
   light: {
     text: '#11181C',
     background: '#fff',

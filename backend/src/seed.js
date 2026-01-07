@@ -6,9 +6,11 @@ const prisma = new PrismaClient();
 async function main() {
     console.log('🌱 Starting database seed...');
 
-    // Create admin user
+    // =========================
+    // ADMIN
+    // =========================
     const hashedPassword = await bcrypt.hash('admin123', 10);
-    const admin = await prisma.user.upsert({
+    await prisma.user.upsert({
         where: { email: 'admin@catrescue.com' },
         update: {},
         create: {
@@ -21,8 +23,10 @@ async function main() {
     });
     console.log('✅ Admin user created');
 
-    // Create shelters
-    const shelters = await Promise.all([
+    // =========================
+    // SHELTERS (5)
+    // =========================
+    await Promise.all([
         prisma.shelter.upsert({
             where: { id: 'shelter-1' },
             update: {},
@@ -84,53 +88,77 @@ async function main() {
                 capacity: 60,
                 currentOccupancy: 25,
                 isAvailable: true,
-                imageUrl: 'https://images.unsplash.com/photo-1495360010541-f48722b34f7d?w=400'
+                imageUrl: 'https://images.unsplash.com/photo-1495360010541-f48722b34f7d'
+            }
+        }),
+        prisma.shelter.upsert({
+            where: { id: 'shelter-5' },
+            update: {},
+            create: {
+                id: 'shelter-5',
+                name: 'Whisker Haven',
+                description: 'Shelter ramah untuk kucing rescue dan adopsi',
+                address: 'Jl. Antasari No. 55, Jakarta Selatan',
+                phone: '021-55443322',
+                email: 'hello@whiskerhaven.com',
+                capacity: 45,
+                currentOccupancy: 20,
+                isAvailable: true,
+                imageUrl: 'https://images.unsplash.com/photo-1601758123927-1961d6a17f5c'
             }
         })
     ]);
     console.log('✅ Shelters created');
 
-    // Create pets
-    await Promise.all([
-        prisma.pet.create({
-            data: {
-                name: 'Molly',
-                description: 'Si Kecil Aktif',
-                about: 'Molly adalah kucing betina yang penuh kasih sayang dan anggun. Ia sangat suka bermain bola bulu di pagi hari.',
-                imageUrl: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba',
-                age: '2 tahun',
-                gender: 'Betina',
-                breed: 'Domestic Short Hair',
-                vaccine: 'Lengkap',
-                steril: 'Sudah',
-                shelterId: 'shelter-1',
-                status: 'AVAILABLE'
-            }
-        }),
-        prisma.pet.create({
-            data: {
-                name: 'Luna',
-                description: 'Pendiam & Manis',
-                about: 'Luna kucing yang tenang. Cocok untuk pemilik yang suka suasana rumah yang damai.',
-                imageUrl: 'https://images.unsplash.com/photo-1513245533132-aa7f8176b202',
-                age: '1 tahun',
-                gender: 'Betina',
-                breed: 'Persian Mix',
-                vaccine: 'Tahap 1',
-                steril: 'Belum',
-                shelterId: 'shelter-2',
-                status: 'AVAILABLE'
-            }
-        })
-    ]);
-    console.log('✅ Pets created');
+    // =========================
+    // PETS (30)
+    // =========================
+    const cats = [
+        'Milo', 'Luna', 'Oliver', 'Leo', 'Bella', 'Kitty',
+        'Simba', 'Chloe', 'Nala', 'Coco', 'Rocky', 'Lily',
+        'Mochi', 'Oreo', 'Pumpkin', 'Shadow', 'Snowy',
+        'Peanut', 'Misty', 'Poppy', 'Lucky', 'Max',
+        'Ruby', 'Charlie', 'Daisy', 'Toby', 'Rosie',
+        'Finn', 'Zoe', 'Tiger'
+    ];
 
-    // Create campaigns
+    const shelterIds = [
+        'shelter-1',
+        'shelter-2',
+        'shelter-3',
+        'shelter-4',
+        'shelter-5'
+    ];
+
+    await Promise.all(
+        cats.map((name, index) =>
+            prisma.pet.create({
+                data: {
+                    name,
+                    description: 'Siap untuk diadopsi',
+                    about: `${name} adalah kucing yang sehat, aktif, dan ramah terhadap manusia.`,
+                    imageUrl: `https://source.unsplash.com/400x400/?cat,kitten&sig=${index}`,
+                    age: `${(index % 5) + 1} tahun`,
+                    gender: index % 2 === 0 ? 'Jantan' : 'Betina',
+                    breed: 'Domestic Mix',
+                    vaccine: index % 3 === 0 ? 'Lengkap' : 'Tahap 1',
+                    steril: index % 2 === 0 ? 'Sudah' : 'Belum',
+                    shelterId: shelterIds[index % shelterIds.length],
+                    status: 'AVAILABLE'
+                }
+            })
+        )
+    );
+    console.log('✅ 30 Cats created');
+
+    // =========================
+    // CAMPAIGNS (10)
+    // =========================
     await Promise.all([
         prisma.campaign.create({
             data: {
                 title: 'Pakan kucing di shelter',
-                description: 'Bantu kami menyediakan makanan berkualitas untuk 50+ kucing di shelter',
+                description: 'Bantu kami menyediakan makanan berkualitas untuk 50+ kucing',
                 imageUrl: 'https://images.unsplash.com/photo-1548681528-6a5c45b66b42',
                 targetAmount: 5000000,
                 currentAmount: 2500000,
@@ -141,16 +169,104 @@ async function main() {
         prisma.campaign.create({
             data: {
                 title: 'Renovasi kandang kucing',
-                description: 'Membangun kandang yang lebih nyaman dan aman untuk kucing-kucing kami',
+                description: 'Membangun kandang yang lebih nyaman dan aman',
                 imageUrl: 'https://images.unsplash.com/photo-1425082661705-1834bfd09dca',
                 targetAmount: 10000000,
                 currentAmount: 7500000,
                 shelterId: 'shelter-2',
                 status: 'ACTIVE'
             }
+        }),
+        prisma.campaign.create({
+            data: {
+                title: 'Biaya kesehatan & vaksin',
+                description: 'Dana untuk vaksinasi dan pemeriksaan kesehatan rutin',
+                imageUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2',
+                targetAmount: 3000000,
+                currentAmount: 500000,
+                shelterId: 'shelter-3',
+                status: 'ACTIVE'
+            }
+        }),
+        prisma.campaign.create({
+            data: {
+                title: 'Perbaikan pagar shelter',
+                description: 'Memperbaiki pagar dan area luar agar aman untuk kucing',
+                imageUrl: 'https://images.unsplash.com/photo-1517423440428-a5a00ad493e8',
+                targetAmount: 2000000,
+                currentAmount: 800000,
+                shelterId: 'shelter-4',
+                status: 'ACTIVE'
+            }
+        }),
+        prisma.campaign.create({
+            data: {
+                title: 'Perlengkapan Kandang Baru',
+                description: 'Membeli kasur, mainan, dan litter tray untuk kucing',
+                imageUrl: 'https://images.unsplash.com/photo-1512790182412-b19e6d62bc39',
+                targetAmount: 4000000,
+                currentAmount: 1200000,
+                shelterId: 'shelter-5',
+                status: 'ACTIVE'
+            }
+        }),
+        prisma.campaign.create({
+            data: {
+                title: 'Transportasi Adopsi',
+                description: 'Dana untuk transportasi kucing ke rumah adoptor',
+                imageUrl: 'https://images.unsplash.com/photo-1516280030429-3f7b4f9a3e6a',
+                targetAmount: 1500000,
+                currentAmount: 300000,
+                shelterId: 'shelter-1',
+                status: 'ACTIVE'
+            }
+        }),
+        prisma.campaign.create({
+            data: {
+                title: 'Pendidikan & Pelatihan Volunteer',
+                description: 'Pelatihan untuk volunteer dan staf shelter',
+                imageUrl: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1',
+                targetAmount: 2500000,
+                currentAmount: 600000,
+                shelterId: 'shelter-2',
+                status: 'ACTIVE'
+            }
+        }),
+        prisma.campaign.create({
+            data: {
+                title: 'Sterilisasi Massal',
+                description: 'Program sterilisasi untuk mencegah overpopulation',
+                imageUrl: 'https://images.unsplash.com/photo-1555680202-c86f0e12f086',
+                targetAmount: 8000000,
+                currentAmount: 1500000,
+                shelterId: 'shelter-3',
+                status: 'ACTIVE'
+            }
+        }),
+        prisma.campaign.create({
+            data: {
+                title: 'Klinik Kucing Keliling',
+                description: 'Menyediakan layanan klinik keliling untuk kucing jalanan',
+                imageUrl: 'https://images.unsplash.com/photo-1546182990-dffeafbe841d',
+                targetAmount: 6000000,
+                currentAmount: 2000000,
+                shelterId: 'shelter-4',
+                status: 'ACTIVE'
+            }
+        }),
+        prisma.campaign.create({
+            data: {
+                title: 'Emergency Fund',
+                description: 'Dana darurat untuk operasi dan kasus critical',
+                imageUrl: 'https://images.unsplash.com/photo-1511910849309-6c0d6d8b1d1f',
+                targetAmount: 12000000,
+                currentAmount: 4500000,
+                shelterId: 'shelter-5',
+                status: 'ACTIVE'
+            }
         })
     ]);
-    console.log('✅ Campaigns created');
+    console.log('✅ 10 Campaigns created');
 
     console.log('🎉 Database seeded successfully!');
 }

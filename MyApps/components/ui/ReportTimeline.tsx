@@ -23,9 +23,9 @@ const ReportTimeline: React.FC<ReportTimelineProps> = ({ timeline }) => {
         return icon as any;
     };
 
-    // Sort timeline by timestamp (newest first)
+    // Sort timeline by createdAt (newest first)
     const sortedTimeline = [...timeline].sort(
-        (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
 
     return (
@@ -55,7 +55,7 @@ const ReportTimeline: React.FC<ReportTimelineProps> = ({ timeline }) => {
                                 <Text style={styles.description}>{entry.description}</Text>
                             )}
                             <Text style={styles.timestamp}>
-                                {formatDate(entry.timestamp)}
+                                {formatDate(entry.createdAt)}
                             </Text>
                         </View>
                     </View>

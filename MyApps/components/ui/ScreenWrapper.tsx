@@ -5,24 +5,34 @@ import { SafeAreaView } from "react-native-safe-area-context";
 interface ScreenWrapperProps {
   children: React.ReactNode;
   backgroundImage?: any;
+  backgroundColor?: string;
 }
 
 const ScreenWrapper = ({
   children,
-  backgroundImage = { uri: "https://your-image-url.com/bg.jpg" },
+  backgroundImage,
+  backgroundColor,
 }: ScreenWrapperProps) => {
-  return (
-    <ImageBackground
-      source={backgroundImage}
-      resizeMode="cover"
-      style={styles.backgroundImage}
-    >
-      <View style={styles.container}>
-        <SafeAreaView edges={["top"]} style={styles.safeAreaTop} />
-        {children}
-      </View>
-    </ImageBackground>
+  const content = (
+    <View style={[styles.container, backgroundColor ? { backgroundColor } : null]}>
+      <SafeAreaView edges={["top"]} style={styles.safeAreaTop} />
+      {children}
+    </View>
   );
+
+  if (backgroundImage) {
+    return (
+      <ImageBackground
+        source={backgroundImage}
+        resizeMode="cover"
+        style={styles.backgroundImage}
+      >
+        {content}
+      </ImageBackground>
+    );
+  }
+
+  return content;
 };
 
 const styles = StyleSheet.create({

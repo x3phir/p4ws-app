@@ -6,12 +6,19 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
+    "test-timeline": "node scripts/trigger_timeline.js",
+    "test-status": "node scripts/trigger_status.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "seed": "node src/seed.js"
   },
-  "keywords": ["cat", "rescue", "api", "express"],
+  "keywords": [
+    "cat",
+    "rescue",
+    "api",
+    "express"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {

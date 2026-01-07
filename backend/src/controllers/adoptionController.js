@@ -1,5 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const notificationController = require('./notificationController');
 
 // Create new adoption request
 exports.createRequest = async (req, res) => {
@@ -125,6 +126,14 @@ exports.updateStatus = async (req, res) => {
                 data: { status: 'ADOPTED' }
             });
         }
+
+        // Create notification for user
+        await notificationController.createNotification(
+            updated.userId,
+            'Status Adopsi Diperbarui',
+            `Permintaan adopsi Anda sekarang berstatus: ${status}${adminNote ? '. Catatan: ' + adminNote : ''}`,
+            'ADOPTION_UPDATE'
+        );
 
         res.json(updated);
     } catch (error) {
