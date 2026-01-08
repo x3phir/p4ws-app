@@ -1,5 +1,5 @@
 import { usePathname, useRouter } from "expo-router";
-import { Camera, Globe, Home, PawPrint, User } from "lucide-react-native";
+import { Camera, Heart, Home, PawPrint, User } from "lucide-react-native";
 import React, { useRef } from "react";
 import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -71,8 +71,8 @@ const BottomTabCamera = () => {
   return (
     <View style={[styles.wrapper, { paddingBottom: insets.bottom }]}>
       <View style={styles.container}>
-        {/* 1. Globe */}
-        <TabIcon path="/donation" Icon={Globe} />
+        {/* 1. Heart */}
+        <TabIcon path="/donation" Icon={Heart} />
 
         {/* 2. Kamera */}
         <TabIcon path="/lapor" Icon={Camera} />

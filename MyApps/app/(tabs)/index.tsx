@@ -197,7 +197,7 @@ const ExploreScreen = () => {
             <View style={styles.carouselHeader}>
               <View>
                 <Text style={styles.carouselTitle}>Kucing Gemas Menunggumu</Text>
-                <Text style={styles.carouselSubtitle}>Siap diadopsi & cari rumah baru 🏠</Text>
+                <Text style={styles.carouselSubtitle}>Siap diadopsi & cari rumah baru</Text>
               </View>
               <TouchableOpacity onPress={() => router.push('/adopt' as any)}>
                 <Text style={styles.seeAll}>Semua</Text>
@@ -310,7 +310,7 @@ const ExploreScreen = () => {
           {/* CAMPAIGNS SECTION */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Donasi Mendesak</Text>
+              <Text style={styles.sectionTitle}>Donasi</Text>
               <Text style={styles.seeAll}>Bantu Sekarang</Text>
             </View>
             {loading ? (
@@ -518,7 +518,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     padding: 15,
-    backgroundColor: 'rgba(255,255,255,0.9)',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -526,7 +525,13 @@ const styles = StyleSheet.create({
   petSlideName: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#1a1a1a',
+    color: '#ffffffff',
+    backgroundColor: '#bababa24',
+    borderWidth: 1,
+    borderColor: '#a7a7a7',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
   },
   petSlideTag: {
     backgroundColor: Colors.primary,

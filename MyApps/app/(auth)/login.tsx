@@ -96,18 +96,6 @@ export default function Login() {
             )}
           </TouchableOpacity>
 
-          <View style={styles.socialSection}>
-            <Text style={styles.orText}>atau gunakan</Text>
-            <View style={styles.socialButtons}>
-              <TouchableOpacity style={styles.socialIcon}>
-                <Apple color="#11181C" size={28} fill="#11181C" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.socialIcon}>
-                <Chrome color="#11181C" size={28} />
-              </TouchableOpacity>
-            </View>
-          </View>
-
           <View style={styles.footer}>
             <Text style={styles.footerText}>Belum punya akun? </Text>
             <TouchableOpacity onPress={() => router.push("/register")}>

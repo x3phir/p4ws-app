@@ -5,9 +5,10 @@ import PetDetailHeader from "@/components/ui/PetDetailHeader";
 import { createAdoptionRequest } from "@/services/adoptionService";
 import { getPetById, Pet } from "@/services/petService";
 import { useLocalSearchParams } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   ActivityIndicator,
+  Animated,
   Linking,
   Platform,
   ScrollView,
@@ -24,6 +25,12 @@ const PetProfileScreen = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  // Animation values
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
+  const scaleAnim = useRef(new Animated.Value(0.95)).current;
+  const buttonScale = useRef(new Animated.Value(1)).current;
+
   // Fetch Pet Detail
   useEffect(() => {
     const fetchPet = async () => {
@@ -32,6 +39,26 @@ const PetProfileScreen = () => {
         const data = await getPetById(String(id));
         setPet(data);
         setLoading(false);
+
+        // Trigger animations when data loads
+        Animated.parallel([
+          Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 600,
+            useNativeDriver: true,
+          }),
+          Animated.timing(slideAnim, {
+            toValue: 0,
+            duration: 500,
+            useNativeDriver: true,
+          }),
+          Animated.spring(scaleAnim, {
+            toValue: 1,
+            tension: 50,
+            friction: 7,
+            useNativeDriver: true,
+          }),
+        ]).start();
       }
     };
     fetchPet();
@@ -47,13 +74,28 @@ const PetProfileScreen = () => {
       });
       alert("Pengajuan adopsi berhasil! Silakan cek status di menu Profil.");
       setModalVisible(false);
-      // Optional: Navigate to profile
-      // router.push("/profile");
     } catch (error: any) {
       alert("Gagal mengajukan adopsi: " + (error?.response?.data?.error || "Terjadi kesalahan"));
     } finally {
       setSubmitting(false);
     }
+  };
+
+  // Button press animation
+  const handlePressIn = () => {
+    Animated.spring(buttonScale, {
+      toValue: 0.95,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(buttonScale, {
+      toValue: 1,
+      friction: 3,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
   };
 
   // Fungsi untuk membuka aplikasi Maps Luar
@@ -65,10 +107,6 @@ const PetProfileScreen = () => {
       });
       const label = `Shelter ${pet.shelter.name}`;
       const query = encodeURIComponent(`${pet.shelter.address}`);
-      const url = Platform.select({
-        ios: `${scheme}${label}@${query}`,
-        android: `${scheme}${query}(${label})`,
-      });
       const simpleUrl = Platform.select({
         ios: `http://maps.apple.com/?q=${query}`,
         android: `geo:0,0?q=${query}`
@@ -98,61 +136,52 @@ const PetProfileScreen = () => {
 
   return (
     <View style={styles.mainContainer}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        style={styles.scrollView}
+      <Animated.View
+        style={{
+          flex: 1,
+          opacity: fadeAnim,
+          transform: [
+            { translateY: slideAnim },
+            { scale: scaleAnim }
+          ],
+        }}
       >
-        <PetDetailHeader
-          name={pet.name}
-          description={pet.description}
-          imageUri={pet.imageUrl}
-        />
-
-        <View style={styles.body}>
-          <InfoSection title={`Tentang ${pet.name}`} content={pet.about} />
-
-          <InfoSection title="Riwayat Kesehatan">
-            <View style={styles.healthRow}>
-              <HealthCard type="vaccine" status={pet.vaccine || "Unknown"} />
-              <HealthCard type="steril" status={pet.steril || "Unknown"} />
-            </View>
-          </InfoSection>
-
-          {/* Bagian Lokasi Shelter */}
-          {pet.shelter && (
-            <InfoSection title="Lokasi Shelter">
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={openExternalMap}
-                style={styles.locationCard}
-              >
-                <View style={styles.locationIconContainer}>
-                  <Text style={styles.locationIcon}>📍</Text>
-                </View>
-                <View style={styles.locationInfo}>
-                  <Text style={styles.locationTitle}>Shelter {pet.shelter.name}</Text>
-                  <Text style={styles.locationCoords}>
-                    {pet.shelter.address}
-                  </Text>
-                  <Text style={styles.locationHint}>
-                    Ketuk untuk buka di Maps →
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            </InfoSection>
-          )}
-        </View>
-      </ScrollView>
-
-      <View style={styles.fixedFooter}>
-        <TouchableOpacity
-          style={styles.adoptButton}
-          activeOpacity={0.8}
-          onPress={() => setModalVisible(true)}
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          style={styles.scrollView}
         >
-          <Text style={styles.adoptText}>Adopsi {pet.name} Sekarang</Text>
-        </TouchableOpacity>
-      </View>
+          <PetDetailHeader
+            name={pet.name}
+            description={pet.description}
+            imageUri={pet.imageUrl}
+          />
+
+          <View style={styles.body}>
+            <InfoSection title={`Tentang ${pet.name}`} content={pet.about} />
+
+            <InfoSection title="Riwayat Kesehatan">
+              <View style={styles.healthRow}>
+                <HealthCard type="vaccine" status={pet.vaccine || "Unknown"} />
+                <HealthCard type="steril" status={pet.steril || "Unknown"} />
+              </View>
+            </InfoSection>
+          </View>
+        </ScrollView>
+
+        <View style={styles.fixedFooter}>
+          <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
+            <TouchableOpacity
+              style={styles.adoptButton}
+              activeOpacity={0.9}
+              onPress={() => setModalVisible(true)}
+              onPressIn={handlePressIn}
+              onPressOut={handlePressOut}
+            >
+              <Text style={styles.adoptText}>Adopsi {pet.name} Sekarang</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
+      </Animated.View>
 
       <AdoptionModal
         isVisible={modalVisible}
@@ -176,52 +205,6 @@ const styles = StyleSheet.create({
   scrollView: { flex: 1 },
   body: { backgroundColor: "#F5EFE6", marginTop: -2, paddingBottom: 40 },
   healthRow: { flexDirection: "row", gap: 12, marginTop: 8 },
-  locationCard: {
-    flexDirection: "row",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 20,
-    padding: 16,
-    marginTop: 10,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  locationIconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: "#F3F4F6",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-  },
-  locationIcon: {
-    fontSize: 24,
-  },
-  locationInfo: {
-    flex: 1,
-    justifyContent: "center",
-  },
-  locationTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#1A1A1A",
-    marginBottom: 4,
-  },
-  locationCoords: {
-    fontSize: 12,
-    color: "#6B7280",
-    marginBottom: 4,
-  },
-  locationHint: {
-    fontSize: 11,
-    color: "#1EB00E",
-    fontWeight: "600",
-  },
   fixedFooter: {
     backgroundColor: "#F5EFE6",
     paddingHorizontal: 24,

@@ -56,8 +56,12 @@ const PetDetailHeader = ({
 
       {/* Info Overlay dengan Background Krem Solid di bawah */}
       <View style={styles.infoOverlay}>
-        <Text style={styles.nameText}>{name}</Text>
-        <Text style={styles.descText}>{description}</Text>
+        <View style={styles.glassShape}>
+          <Text style={styles.nameText}>{name}</Text>
+        </View>
+        <View style={styles.desc}>
+          <Text style={styles.descText}>{description}</Text>
+        </View>
       </View>
     </View>
   );
@@ -82,6 +86,30 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
+  glassShape: {
+    backgroundColor: "#bdbdbd4e", // Warna pink pastel tipis
+    alignSelf: "flex-start",
+    paddingHorizontal: 5,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginBottom: 8,
+    borderColor: "#bdbdbd",
+    borderWidth: 1,
+  },
+  desc: {
+    backgroundColor: "#3bff72df", // Warna pink pastel tipis
+    alignSelf: "flex-start",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  descText: {
+    color: "#000000ff",
+    fontSize: 9,
+    fontWeight: "bold",
+    textTransform: "uppercase",
+  },
   rightActions: {
     flexDirection: "row",
     gap: 12,
@@ -99,21 +127,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
     paddingBottom: 20,
     paddingTop: 40,
-    // Jika tidak pakai expo-linear-gradient, kita gunakan padding besar
-    // agar menyatu dengan Body krem di bawahnya
-    backgroundColor: "rgba(245, 239, 230, 0.4)", // Krem semi-transparan tipis di atas
   },
   nameText: {
     fontSize: 48,
     fontWeight: "900",
-    color: "#1A1A1A",
+    color: "#dcdcdcff",
     letterSpacing: -1,
-  },
-  descText: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#4B5563", // gray-600
-    marginTop: 2,
   },
 });
 

@@ -32,6 +32,7 @@ exports.createDonation = async (req, res) => {
             `Donasi Anda sebesar Rp ${donationAmount.toLocaleString()} telah terkirim dan sedang menunggu verifikasi admin.`,
             'DONATION_CREATED'
         );
+        console.log(donation.id);
 
         res.status(201).json(donation);
     } catch (error) {

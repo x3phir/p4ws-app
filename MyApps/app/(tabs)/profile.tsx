@@ -7,7 +7,7 @@ import { getUserProfile, updateProfile, UserProfile } from "@/services/userServi
 import { CatReport, getMyReports } from "@/services/reportService";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
-import { Camera, Shield, ShieldCheck, LogOut, Pencil } from "lucide-react-native";
+import { Camera, Shield, ShieldCheck, LogOut, Pencil, Mail, Phone } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -329,43 +329,57 @@ const ProfileScreen = () => {
         >
           {/* Profile Section */}
           <View style={styles.profileSection}>
-            <View style={styles.avatarContainer}>
-              {profile?.avatar ? (
-                <Image source={{ uri: profile.avatar }} style={styles.avatar} />
-              ) : (
-                <View style={styles.avatarPlaceholder}>
-                  <Text style={styles.avatarPlaceholderText}>
-                    {profile?.name?.charAt(0).toUpperCase() || "👤"}
+            <View style={styles.profileHeader}>
+              <View style={styles.avatarContainer}>
+                {profile?.avatar ? (
+                  <Image source={{ uri: profile.avatar }} style={styles.avatar} />
+                ) : (
+                  <View style={styles.avatarPlaceholder}>
+                    <Text style={styles.avatarPlaceholderText}>
+                      {profile?.name?.charAt(0).toUpperCase() || "👤"}
+                    </Text>
+                  </View>
+                )}
+                <TouchableOpacity
+                  style={styles.editAvatarBtn}
+                  onPress={handlePickAvatar}
+                  activeOpacity={0.8}
+                >
+                  <Camera size={16} color="white" />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.profileInfo}>
+                <Text style={styles.userName}>
+                  {profile?.name}
+                </Text>
+                <View style={styles.userEmailContainer}>
+                  <Mail size={16} color="#1A1A1A" />
+                  <Text style={styles.userEmail}>
+                    {profile?.email}
                   </Text>
                 </View>
-              )}
+                <View style={styles.userPhoneContainer}>
+                  <Phone size={16} color="#1A1A1A" />
+                  {profile?.phone && (
+                    <Text style={styles.userPhone}>{profile.phone}</Text>
+                  )}
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.profileActions}>
+              {renderVerificationBadge()}
+
               <TouchableOpacity
-                style={styles.editAvatarBtn}
-                onPress={handlePickAvatar}
-                activeOpacity={0.8}
+                style={styles.editProfileBtn}
+                onPress={handleEditProfile}
+                activeOpacity={0.7}
               >
-                <Camera size={16} color="white" />
+                <Pencil size={18} color="#1A1A1A" />
+                <Text style={styles.editProfileText}>Edit Profil</Text>
               </TouchableOpacity>
             </View>
-
-            <View style={styles.profileInfo}>
-              <Text style={styles.userName}>{profile?.name}</Text>
-              <Text style={styles.userEmail}>{profile?.email}</Text>
-              {profile?.phone && (
-                <Text style={styles.userPhone}>📱 {profile.phone}</Text>
-              )}
-            </View>
-
-            {renderVerificationBadge()}
-
-            <TouchableOpacity
-              style={styles.editProfileBtn}
-              onPress={handleEditProfile}
-              activeOpacity={0.7}
-            >
-              <Pencil size={18} color="#1A1A1A" />
-              <Text style={styles.editProfileText}>Edit Profil</Text>
-            </TouchableOpacity>
           </View>
 
           {/* Tabs */}
@@ -530,6 +544,14 @@ const styles = StyleSheet.create({
     color: "#6B7280",
     fontWeight: "600"
   },
+  // Profile Header (Avatar + Info dalam row)
+  profileHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 20,
+    gap: 16,
+  },
   header: {
     paddingTop: 60,
     paddingBottom: 20,
@@ -558,7 +580,7 @@ const styles = StyleSheet.create({
     minHeight: height - 150,
   },
   profileSection: {
-    alignItems: "center",
+    alignItems: "flex-start",
     marginBottom: 32,
     paddingHorizontal: 24,
   },
@@ -591,6 +613,16 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: "#9CA3AF"
   },
+  userEmailContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  userPhoneContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
   editAvatarBtn: {
     position: "absolute",
     bottom: 2,
@@ -610,24 +642,30 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   profileInfo: {
-    alignItems: "center",
+    alignItems: "flex-start",
     marginBottom: 16,
-    gap: 4
+    gap: 4,
   },
   userName: {
     fontSize: 24,
     fontWeight: "800",
     color: "#1A1A1A",
-    letterSpacing: -0.5
+    letterSpacing: -0.5,
   },
   userEmail: {
     fontSize: 14,
-    color: "#6B7280",
+    backgroundColor: "#afafafff",
+    padding: 4,
+    borderRadius: 8,
+    color: "#000000ff",
     fontWeight: "500"
   },
   userPhone: {
     fontSize: 14,
-    color: "#6B7280",
+    backgroundColor: "#afafafff",
+    padding: 4,
+    borderRadius: 8,
+    color: "#000000ff",
     fontWeight: "500"
   },
   verifiedBadge: {
@@ -706,6 +744,11 @@ const styles = StyleSheet.create({
   },
   activeTabCount: {
     backgroundColor: Colors.primary,
+  },
+  profileActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   tabCountText: {
     fontSize: 11,

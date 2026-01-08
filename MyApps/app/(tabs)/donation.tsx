@@ -22,11 +22,18 @@ import ScreenWrapper from "@/components/ui/ScreenWrapper";
 
 const { height } = Dimensions.get("window");
 
+// Component Badge Complete
+const CompleteBadge = () => (
+  <View style={styles.completeBadge}>
+    <Text style={styles.completeBadgeText}>✓ Selesai</Text>
+  </View>
+);
+
 const DonationScreen = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortOption, setSortOption] = useState("Terbaru"); // Terbaru, Target, Progress
+  const [sortOption, setSortOption] = useState("Terbaru");
   const [isSortModalVisible, setIsSortModalVisible] = useState(false);
 
   useEffect(() => {
@@ -59,8 +66,16 @@ const DonationScreen = () => {
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
 
-  const urgentCampaigns = filteredAndSortedCampaigns.filter(c => c.isUrgent);
-  const otherCampaigns = filteredAndSortedCampaigns.filter(c => !c.isUrgent);
+  // Pisahkan berdasarkan status complete
+  const completedCampaigns = filteredAndSortedCampaigns.filter(
+    c => c.currentAmount >= c.targetAmount
+  );
+  const activeCampaigns = filteredAndSortedCampaigns.filter(
+    c => c.currentAmount < c.targetAmount
+  );
+
+  const urgentCampaigns = activeCampaigns.filter(c => c.isUrgent);
+  const otherCampaigns = activeCampaigns.filter(c => !c.isUrgent);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("id-ID", {
@@ -72,7 +87,6 @@ const DonationScreen = () => {
 
   return (
     <ScreenWrapper backgroundColor={Colors.primary}>
-
       <View style={styles.headerDecoration} pointerEvents="none">
         <PawPrint size={100} color="rgba(255,255,255,0.1)" style={{ position: 'absolute', top: 20, right: -20, transform: [{ rotate: '15deg' }] }} />
         <View style={styles.bubble1} />
@@ -140,17 +154,22 @@ const DonationScreen = () => {
 
                 <View style={styles.listContainer}>
                   {otherCampaigns.length > 0 ? (
-                    otherCampaigns.map((campaign) => (
-                      <DonationListCard
-                        key={campaign.id}
-                        id={campaign.id}
-                        title={campaign.title}
-                        community={campaign.shelter?.name || "Komunitas"}
-                        collected={formatCurrency(campaign.currentAmount)}
-                        progress={Math.min(campaign.currentAmount / campaign.targetAmount, 1)}
-                        imageUri={campaign.imageUrl}
-                      />
-                    ))
+                    otherCampaigns.map((campaign) => {
+                      const isComplete = campaign.currentAmount >= campaign.targetAmount;
+                      return (
+                        <View key={campaign.id} style={styles.campaignCardWrapper}>
+                          <DonationListCard
+                            id={campaign.id}
+                            title={campaign.title}
+                            community={campaign.shelter?.name || "Komunitas"}
+                            collected={formatCurrency(campaign.currentAmount)}
+                            progress={Math.min(campaign.currentAmount / campaign.targetAmount, 1)}
+                            imageUri={campaign.imageUrl}
+                          />
+                          {isComplete && <CompleteBadge />}
+                        </View>
+                      );
+                    })
                   ) : (
                     urgentCampaigns.length === 0 && (
                       <View style={styles.emptyContainer}>
@@ -161,12 +180,34 @@ const DonationScreen = () => {
                   )}
                 </View>
               </View>
+
+              {/* Section Program Selesai */}
+              {completedCampaigns.length > 0 && (
+                <View style={styles.listSection}>
+                  <Text style={styles.sectionTitle}>Program Selesai</Text>
+                  <View style={styles.listContainer}>
+                    {completedCampaigns.map((campaign) => (
+                      <View key={campaign.id} style={styles.campaignCardWrapper}>
+                        <DonationListCard
+                          id={campaign.id}
+                          title={campaign.title}
+                          community={campaign.shelter?.name || "Komunitas"}
+                          collected={formatCurrency(campaign.currentAmount)}
+                          progress={1}
+                          imageUri={campaign.imageUrl}
+                        />
+                        <CompleteBadge />
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
             </>
           )}
         </ScrollView>
       </View>
 
-      {/* Sort Modal - FIXED */}
+      {/* Sort Modal */}
       <Modal
         visible={isSortModalVisible}
         transparent={true}
@@ -322,6 +363,30 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     paddingHorizontal: 24,
+  },
+  campaignCardWrapper: {
+    position: "relative",
+    marginBottom: 12,
+  },
+  completeBadge: {
+    position: "absolute",
+    top: 80,
+    right: 2,
+    backgroundColor: "#10B981",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  completeBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 0.3,
   },
   emptyContainer: {
     paddingVertical: 60,

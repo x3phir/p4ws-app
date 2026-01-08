@@ -1,6 +1,5 @@
-import { useRouter } from "expo-router"; // Import router
 import React from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image, StyleSheet, Text, TouchableOpacity, View, Button } from "react-native";
 import { getImageUrl } from "@/utils/urlHelper";
 
 interface ShelterItemProps {
@@ -56,6 +55,17 @@ const styles = StyleSheet.create({
     fontWeight: "700", // Saya buat sedikit lebih tebal biar tegas
     color: "#1F2937",
     fontSize: 14,
+  },
+  button: {
+    backgroundColor: "#1EB00E",
+    padding: 8,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  buttonText: {
+    color: "#FFFFFF",
+    fontWeight: "700",
+    fontSize: 12,
   },
 });
 

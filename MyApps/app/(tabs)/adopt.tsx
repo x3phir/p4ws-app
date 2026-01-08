@@ -55,7 +55,7 @@ const AdoptionScreen = () => {
       const matchesSearch =
         pet.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         pet.breed?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        pet.shelter?.name.toLowerCase().includes(searchQuery.toLowerCase());
+        pet.gender?.toLowerCase().includes(searchQuery.toLowerCase());
 
       // Category Filter
       let matchesCategory = true;
@@ -93,7 +93,7 @@ const AdoptionScreen = () => {
           <View style={styles.searchContainer}>
             <Search color="#9CA3AF" size={20} />
             <TextInput
-              placeholder="Cari Nama, Ras, atau Gender"
+              placeholder="Cari Nama"
               placeholderTextColor="#9CA3AF"
               style={styles.searchInput}
               value={searchQuery}
@@ -124,6 +124,7 @@ const AdoptionScreen = () => {
                   breed={pet.breed || "Tanpa Ras"}
                   location={pet.shelter?.address.split(',')[0] || "Shelter"}
                   imageUri={pet.imageUrl}
+                  gender={pet.gender}
                   onPress={() => router.push(`/adopt/${pet.id}` as any)}
                 />
               ))}
