@@ -133,33 +133,52 @@ exports.createReport = async (req, res) => {
 exports.updateReportStatus = async (req, res) => {
     try {
         const { id } = req.params;
-        const { status, activity, description } = req.body;
+        const { status, activity, description, adminNote } = req.body;
 
-        const report = await prisma.report.update({
-            where: { id },
-            data: {
-                status,
-                timeline: {
-                    create: {
-                        activity: activity || `Status diubah menjadi ${status}`,
-                        description: description || `Laporan telah diupdate ke status ${status}`,
-                        icon: 'info'
+        const currentReport = await prisma.report.findUnique({ where: { id } });
+        if (!currentReport) return res.status(404).json({ error: 'Report not found' });
+
+        const report = await prisma.$transaction(async (tx) => {
+            const updatedReport = await tx.report.update({
+                where: { id },
+                data: {
+                    status,
+                    adminNote: adminNote !== undefined ? adminNote : currentReport.adminNote,
+                    timeline: {
+                        create: {
+                            activity: activity || (status === 'REJECTED' ? 'Laporan Ditolak' : `Status diubah menjadi ${status}`),
+                            description: description || (status === 'REJECTED' ? (adminNote || 'Maaf, laporan Anda tidak dapat diproses.') : `Laporan telah diupdate ke status ${status}`),
+                            icon: status === 'REJECTED' ? 'x-circle' : 'info'
+                        }
+                    }
+                },
+                include: {
+                    shelter: true,
+                    timeline: {
+                        orderBy: { createdAt: 'desc' }
                     }
                 }
-            },
-            include: {
-                shelter: true,
-                timeline: {
-                    orderBy: { createdAt: 'desc' }
-                }
+            });
+
+            // If moving to REJECTED or CANCELLED from a non-terminating state, decrement occupancy
+            const terminatingStatuses = ['REJECTED', 'CANCELLED'];
+            if (terminatingStatuses.includes(status) && !terminatingStatuses.includes(currentReport.status)) {
+                await tx.shelter.update({
+                    where: { id: updatedReport.shelterId },
+                    data: { currentOccupancy: { decrement: 1 } }
+                });
             }
+
+            return updatedReport;
         });
 
         // Create notification for user
         await notificationController.createNotification(
             report.userId,
-            'Update Status Laporan',
-            activity || `Laporan Anda telah diperbarui menjadi: ${status}`,
+            status === 'REJECTED' ? 'Laporan Ditolak' : 'Update Status Laporan',
+            status === 'REJECTED'
+                ? `Laporan Anda telah ditolak. Alasan: ${adminNote || 'Tidak disebutkan'}`
+                : (activity || `Laporan Anda telah diperbarui menjadi: ${status}`),
             'REPORT_UPDATE'
         );
 

@@ -36,7 +36,16 @@ exports.getCampaignById = async (req, res) => {
         const campaign = await prisma.campaign.findUnique({
             where: { id },
             include: {
-                shelter: true
+                shelter: true,
+                donations: {
+                    where: { status: 'VERIFIED' },
+                    include: {
+                        user: {
+                            select: { name: true }
+                        }
+                    },
+                    orderBy: { createdAt: 'desc' }
+                }
             }
         });
 

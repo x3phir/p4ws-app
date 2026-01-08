@@ -7,7 +7,7 @@ import {
   View,
 } from "react-native";
 
-const categories = ["Semua", "Kitten", "Dewasa", "Terdekat"];
+const categories = ["Semua", "Kitten", "Dewasa"];
 
 interface CategoryTabsProps {
   onSelect: (category: string) => void;

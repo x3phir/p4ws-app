@@ -30,7 +30,7 @@ const { height, width } = Dimensions.get("window");
 const ExploreScreen = () => {
   const router = useRouter();
   const CARD_HEIGHT = height - 130;
-  const COLLAPSED_POSITION = height - 600;
+  const COLLAPSED_POSITION = height - 570;
   const EXPANDED_POSITION = 170;
 
   const pan = useRef(new Animated.Value(COLLAPSED_POSITION)).current;
@@ -51,9 +51,8 @@ const ExploreScreen = () => {
   // Dynamic statistics
   const [stats, setStats] = useState([
     { label: "Kucing Diselamatkan", value: "0", icon: <Cat size={20} color={Colors.primary} />, color: "#E8F5E9" },
-    { label: "Total Donasi", value: "Rp 0", icon: <Heart size={20} color="#FF6B6B" />, color: "#FFF5F5" },
+    { label: "Donasi Terkumpul", value: "Rp 0", icon: <Heart size={20} color="#FF6B6B" />, color: "#FFF5F5" },
     { label: "Shelter Partner", value: "0", icon: <Home size={20} color="#4DABF7" />, color: "#F0F7FF" },
-    { label: "Relawan Aktif", value: "0", icon: <Users size={20} color="#FAB005" />, color: "#FFF9DB" },
   ]);
 
   useEffect(() => {
@@ -98,7 +97,6 @@ const ExploreScreen = () => {
       ).length;
       const totalDonations = campaignsData.reduce((sum: number, c: any) => sum + (c.currentAmount || 0), 0);
       const totalShelters = sheltersData.length;
-      const totalVolunteers = sheltersData.reduce((sum: number, s: any) => sum + (s.volunteers || 0), 0) || 350;
 
       setStats([
         {
@@ -108,7 +106,7 @@ const ExploreScreen = () => {
           color: "#E8F5E9"
         },
         {
-          label: "Total Donasi",
+          label: "Donasi Terkumpul",
           value: `Rp ${formatCurrency(totalDonations)}`,
           icon: <Heart size={20} color="#FF6B6B" />,
           color: "#FFF5F5"
@@ -118,12 +116,6 @@ const ExploreScreen = () => {
           value: totalShelters.toString(),
           icon: <Home size={20} color="#4DABF7" />,
           color: "#F0F7FF"
-        },
-        {
-          label: "Relawan Aktif",
-          value: totalVolunteers.toString(),
-          icon: <Users size={20} color="#FAB005" />,
-          color: "#FFF9DB"
         },
       ]);
     } catch (e) {
@@ -167,11 +159,10 @@ const ExploreScreen = () => {
   );
 
   return (
-    <ScreenWrapper backgroundColor={Colors.primary}>
+    <ScreenWrapper backgroundImage={"https://res.cloudinary.com/dm9xspnbe/image/upload/v1767842412/iPhone_16_-_1_w6bic9.jpg"}>
       <Header name="Rex ID" />
-
       {/* Background decoration - Simplified */}
-      <View style={styles.headerDecoration}>
+      <View style={styles.headerDecoration} pointerEvents="none">
         <PawPrint size={100} color="rgba(255,255,255,0.1)" style={{ position: 'absolute', top: 20, right: -20, transform: [{ rotate: '15deg' }] }} />
         <View style={styles.bubble1} />
       </View>
@@ -437,14 +428,15 @@ const styles = StyleSheet.create({
   },
   statsGrid: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
     justifyContent: 'space-between',
-    gap: 12,
+    gap: 10,
   },
   statsCard: {
-    width: (width - 52) / 2,
-    padding: 18,
+    flex: 1, // Menggunakan flex agar ukuran tiap kartu otomatis menyesuaikan lebar layar
+    minHeight: 110,
+    paddingVertical: 14,
+    paddingHorizontal: 8,
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
@@ -466,16 +458,18 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   statsValue: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#1a1a1a',
     marginTop: 4,
+    textAlign: 'center',
   },
   statsLabel: {
-    fontSize: 11,
+    fontSize: 10,
     color: '#666',
-    marginTop: 4,
+    marginTop: 2,
     textAlign: 'center',
+    fontWeight: '500',
   },
   horizontalPadding: {
     paddingHorizontal: 24,

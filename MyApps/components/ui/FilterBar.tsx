@@ -4,15 +4,15 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface FilterBarProps {
   onSortPress: () => void;
-  onFilterPress: () => void;
+  onFilterPress?: () => void;
 }
 
 const FilterBar = ({ onSortPress, onFilterPress }: FilterBarProps) => {
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, !onFilterPress && { justifyContent: "center" }]}>
       {/* Tombol Urutkan */}
       <TouchableOpacity
-        style={[styles.button, styles.borderRight]}
+        style={[styles.button, !!onFilterPress && styles.borderRight]}
         activeOpacity={0.7}
         onPress={onSortPress}
       >
@@ -21,14 +21,16 @@ const FilterBar = ({ onSortPress, onFilterPress }: FilterBarProps) => {
       </TouchableOpacity>
 
       {/* Tombol Filter */}
-      <TouchableOpacity
-        style={styles.button}
-        activeOpacity={0.7}
-        onPress={onFilterPress}
-      >
-        <Feather name="sliders" size={16} color="#374151" style={styles.icon} />
-        <Text style={styles.buttonText}>Filter</Text>
-      </TouchableOpacity>
+      {onFilterPress && (
+        <TouchableOpacity
+          style={styles.button}
+          activeOpacity={0.7}
+          onPress={onFilterPress}
+        >
+          <Feather name="sliders" size={16} color="#374151" style={styles.icon} />
+          <Text style={styles.buttonText}>Filter</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };

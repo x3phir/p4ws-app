@@ -110,13 +110,15 @@ export const updateReportStatus = async (
     id: string,
     status: ReportStatus,
     activity?: string,
-    description?: string
+    description?: string,
+    adminNote?: string
 ): Promise<CatReport | null> => {
     try {
         const response = await apiClient.put<CatReport>(`/reports/${id}/status`, {
             status,
             activity,
-            description
+            description,
+            adminNote
         });
         return response.data;
     } catch (error) {

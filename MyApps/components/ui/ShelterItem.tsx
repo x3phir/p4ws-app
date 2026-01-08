@@ -9,20 +9,8 @@ interface ShelterItemProps {
 }
 
 const ShelterItem = ({ name, imageUri }: ShelterItemProps) => {
-  const router = useRouter();
-
-  const handlePress = () => {
-    // Navigasi ke file shelter.tsx
-    // Jika nanti butuh kirim ID, bisa pakai: router.push({ pathname: "/shelter", params: { name } })
-    router.push("/shelter");
-  };
-
   return (
-    <TouchableOpacity
-      style={styles.container}
-      activeOpacity={0.7}
-      onPress={handlePress}
-    >
+    <View style={styles.container}>
       {/* Container Gambar dengan Border Radius Eksplisit */}
       <View style={styles.imageWrapper}>
         <Image
@@ -36,7 +24,7 @@ const ShelterItem = ({ name, imageUri }: ShelterItemProps) => {
       <Text style={styles.nameText} numberOfLines={1}>
         {name}
       </Text>
-    </TouchableOpacity>
+    </View>
   );
 };
 

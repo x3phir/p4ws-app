@@ -13,8 +13,14 @@ const ScreenWrapper = ({
   backgroundImage,
   backgroundColor,
 }: ScreenWrapperProps) => {
+  const imageSource = typeof backgroundImage === 'string' ? { uri: backgroundImage } : backgroundImage;
+
   const content = (
-    <View style={[styles.container, backgroundColor ? { backgroundColor } : null]}>
+    <View style={[
+      styles.container,
+      backgroundColor ? { backgroundColor } : null,
+      backgroundImage && !backgroundColor ? { backgroundColor: 'transparent' } : null
+    ]}>
       <SafeAreaView edges={["top"]} style={styles.safeAreaTop} />
       {children}
     </View>
@@ -23,7 +29,7 @@ const ScreenWrapper = ({
   if (backgroundImage) {
     return (
       <ImageBackground
-        source={backgroundImage}
+        source={imageSource}
         resizeMode="cover"
         style={styles.backgroundImage}
       >

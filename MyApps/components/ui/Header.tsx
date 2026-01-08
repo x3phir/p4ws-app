@@ -2,15 +2,13 @@ import { Bell } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useRouter } from "expo-router";
-import { getNotifications } from "@/services/notificationService";
 import { getUserProfile } from "@/services/userService";
 import { Colors } from "@/constants/theme";
+import { useNotifications } from "@/context/NotificationContext";
 
 interface HeaderProps {
   name: string;
 }
-
-import { useNotifications } from "@/context/NotificationContext";
 
 const Header = ({ name: defaultName }: HeaderProps) => {
   const router = useRouter();
@@ -35,14 +33,14 @@ const Header = ({ name: defaultName }: HeaderProps) => {
     <View style={styles.headerWrapper}>
       <View style={styles.topRow}>
         <View>
-          <Text style={styles.welcomeText}>Hello, {displayName}!</Text>
-          <Text style={styles.subText}>Ready to help some cats? 🐾</Text>
+          <Text style={styles.welcomeText}>Halo, {displayName}!</Text>
+          <Text style={styles.subText}>Siap membantu anabul hari ini? 🐾</Text>
         </View>
 
         <TouchableOpacity
           activeOpacity={0.7}
           style={styles.iconContainer}
-          onPress={() => router.push("/notifications" as any)}
+          onPress={() => router.push("/notifications")}
         >
           <Bell color="#1a1a1a" size={24} />
           {unreadCount > 0 && (
@@ -61,8 +59,7 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 30,
     paddingHorizontal: 24,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+    zIndex: 10, // Pastikan di atas layer lain
   },
   topRow: {
     flexDirection: "row",
@@ -100,7 +97,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#AEE637', // Match header bg
+    borderColor: '#FFFFFF', // Menggunakan putih agar kontras di semua background
   },
   badgeText: {
     color: '#fff',

@@ -50,6 +50,8 @@ export default function ReportDetail() {
                 return "#66BB6A";
             case ReportStatus.CANCELLED:
                 return "#EF5350";
+            case ReportStatus.REJECTED:
+                return "#F44336";
             default:
                 return "#9E9E9E";
         }
@@ -135,6 +137,16 @@ export default function ReportDetail() {
                     </View>
                 )}
 
+                {/* adminNote for REJECTED status */}
+                {report.status === ReportStatus.REJECTED && report.adminNote && (
+                    <View style={[styles.detailsCard, { backgroundColor: '#FEE2E2', borderColor: '#EF4444', borderWidth: 1 }]}>
+                        <Text style={[styles.sectionTitle, { color: '#991B1B' }]}>Alasan Penolakan</Text>
+                        <Text style={{ color: '#B91C1C', fontSize: 15, lineHeight: 22 }}>
+                            {report.adminNote}
+                        </Text>
+                    </View>
+                )}
+
                 {/* Report Details */}
                 <View style={styles.detailsCard}>
                     <Text style={styles.sectionTitle}>Informasi Laporan</Text>
@@ -205,8 +217,8 @@ export default function ReportDetail() {
 
                 {/* Timeline */}
                 <ReportTimeline timeline={report.timeline} />
-            </ScrollView>
-        </View>
+            </ScrollView >
+        </View >
     );
 }
 

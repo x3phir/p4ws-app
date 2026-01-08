@@ -23,6 +23,16 @@ const ReportTimeline: React.FC<ReportTimelineProps> = ({ timeline }) => {
         return icon as any;
     };
 
+    const getIconColor = (icon?: string) => {
+        if (icon === 'x-circle') return "#EF4444";
+        return "#32CD32";
+    };
+
+    const getIconBgColor = (icon?: string) => {
+        if (icon === 'x-circle') return "#FEE2E2";
+        return "#E8F5E9";
+    };
+
     // Sort timeline by createdAt (newest first)
     const sortedTimeline = [...timeline].sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -40,11 +50,17 @@ const ReportTimeline: React.FC<ReportTimelineProps> = ({ timeline }) => {
                         )}
 
                         {/* Icon Circle */}
-                        <View style={styles.iconCircle}>
+                        <View style={[
+                            styles.iconCircle,
+                            {
+                                borderColor: getIconColor(entry.icon),
+                                backgroundColor: getIconBgColor(entry.icon)
+                            }
+                        ]}>
                             <Feather
                                 name={getIconName(entry.icon)}
                                 size={16}
-                                color="#32CD32"
+                                color={getIconColor(entry.icon)}
                             />
                         </View>
 

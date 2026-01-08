@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
-import { Cat } from "lucide-react-native";
+import { Cat, PawPrint } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -144,7 +144,14 @@ export default function Lapor() {
 
   return (
     <ScreenWrapper backgroundColor={Colors.primary}>
-      <Header />
+
+      <View style={styles.headerDecoration} pointerEvents="none">
+        <PawPrint size={100} color="rgba(255,255,255,0.1)" style={{ position: 'absolute', top: 20, right: -20, transform: [{ rotate: '15deg' }] }} />
+        <View style={styles.bubble1} />
+      </View>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Lapor Kucing</Text>
+      </View>
 
       <View style={styles.contentCard}>
         <ScrollView
@@ -264,6 +271,17 @@ const styles = StyleSheet.create({
     width: width,
     marginBottom: 10,
   },
+  header: {
+    paddingTop: 60,
+    paddingBottom: 20,
+    paddingHorizontal: 24,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: "900",
+    color: "#1A1A1A",
+    letterSpacing: -0.5,
+  },
   headerContent: {
     paddingHorizontal: 25,
     paddingTop: 20,
@@ -284,12 +302,39 @@ const styles = StyleSheet.create({
     opacity: 0.9,
     marginRight: -10,
   },
+
+  bubble1: {
+    position: 'absolute',
+    top: -50,
+    left: -50,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+  },
+  bubble2: {
+    position: 'absolute',
+    bottom: 50,
+    right: -30,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  headerDecoration: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 300,
+    zIndex: 0,
+  },
   contentCard: {
     flex: 1,
     backgroundColor: "#FFFFFF",
     borderTopLeftRadius: 35,
     borderTopRightRadius: 35,
-    paddingTop: 10,
+    paddingTop: 20,
   },
   formContainer: { paddingHorizontal: 25 },
   inputGroup: { marginBottom: 25 },

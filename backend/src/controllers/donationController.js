@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../config/database');
 const notificationController = require('./notificationController');
 
 exports.createDonation = async (req, res) => {
@@ -7,12 +6,9 @@ exports.createDonation = async (req, res) => {
         const userId = req.user.id;
         const { campaignId, amount } = req.body;
         const file = req.file;
-        console.log(req.file);
-        console.log(userId);
-        console.log(req.body);
+        const donationAmount = parseFloat(amount);
 
         if (!file) {
-            console.log("kena eror");
             return res.status(400).json({ error: 'Proof of payment is required' });
         }
 
@@ -23,7 +19,7 @@ exports.createDonation = async (req, res) => {
             data: {
                 userId,
                 campaignId,
-                amount: parseFloat(amount),
+                amount: donationAmount,
                 proofUrl,
                 status: 'PENDING'
             }
@@ -33,7 +29,7 @@ exports.createDonation = async (req, res) => {
         await notificationController.createNotification(
             userId,
             'Donasi Terkirim',
-            `Donasi Anda sebesar Rp ${parseFloat(amount).toLocaleString()} telah terkirim dan sedang menunggu verifikasi.`,
+            `Donasi Anda sebesar Rp ${donationAmount.toLocaleString()} telah terkirim dan sedang menunggu verifikasi admin.`,
             'DONATION_CREATED'
         );
 
@@ -84,43 +80,77 @@ exports.updateStatus = async (req, res) => {
         const { id } = req.params;
         const { status } = req.body; // VERIFIED, REJECTED
 
-        // Check current status to prevent double counting
-        const currentDonation = await prisma.donation.findUnique({ where: { id } });
-        if (!currentDonation) return res.status(404).json({ error: 'Donation not found' });
+        console.log(`Updating donation ${id} to status: ${status}`);
 
-        if (currentDonation.status === 'VERIFIED' && status === 'VERIFIED') {
-            return res.status(400).json({ error: 'Donation already verified' });
-        }
+        const updatedDonation = await prisma.$transaction(async (tx) => {
+            const currentDonation = await tx.donation.findUnique({ where: { id } });
+            if (!currentDonation) throw new Error('Donation not found');
 
-        const donation = await prisma.donation.update({
-            where: { id },
-            data: { status }
-        });
+            console.log(`Current donation status: ${currentDonation.status}`);
 
-        // If verified, update campaign amount
-        // NOTE: If status changed from VERIFIED to REJECTED, we should decrement? 
-        // For simplicity, assumed we only move PENDING -> VERIFIED or REJECTED.
-        if (status === 'VERIFIED' && currentDonation.status !== 'VERIFIED') {
-            await prisma.campaign.update({
-                where: { id: donation.campaignId },
-                data: {
-                    currentAmount: { increment: donation.amount }
-                }
+            if (currentDonation.status === status) return currentDonation;
+
+            const donation = await tx.donation.update({
+                where: { id },
+                data: { status }
             });
-        }
+
+            // If moving from non-VERIFIED to VERIFIED, increment
+            if (status === 'VERIFIED' && currentDonation.status !== 'VERIFIED') {
+                console.log(`Incrementing campaign ${donation.campaignId} by ${donation.amount}`);
+
+                const updatedCampaign = await tx.campaign.update({
+                    where: { id: donation.campaignId },
+                    data: {
+                        currentAmount: { increment: donation.amount }
+                    }
+                });
+
+                // Check if target reached
+                if (updatedCampaign.currentAmount >= updatedCampaign.targetAmount) {
+                    await tx.campaign.update({
+                        where: { id: donation.campaignId },
+                        data: { status: 'COMPLETED' }
+                    });
+                }
+            }
+
+            // If moving from VERIFIED to REJECTED (or PENDING?), decrement
+            if (status !== 'VERIFIED' && currentDonation.status === 'VERIFIED') {
+                console.log(`Decrementing campaign ${donation.campaignId} by ${donation.amount}`);
+
+                const updatedCampaign = await tx.campaign.update({
+                    where: { id: donation.campaignId },
+                    data: {
+                        currentAmount: { decrement: donation.amount }
+                    }
+                });
+
+                // If amount drops below target, make it ACTIVE again
+                if (updatedCampaign.currentAmount < updatedCampaign.targetAmount) {
+                    await tx.campaign.update({
+                        where: { id: donation.campaignId },
+                        data: { status: 'ACTIVE' }
+                    });
+                }
+            }
+
+            return donation;
+        });
 
         // Create notification for user
         await notificationController.createNotification(
-            donation.userId,
+            updatedDonation.userId,
             status === 'VERIFIED' ? 'Donasi Terverifikasi' : 'Donasi Ditolak',
             status === 'VERIFIED'
-                ? `Donasi Anda sebesar Rp ${donation.amount.toLocaleString()} telah terverifikasi. Terima kasih!`
-                : `Maaf, donasi Anda tidak dapat kami verifikasi.`,
+                ? `Donasi Anda sebesar Rp ${updatedDonation.amount.toLocaleString()} telah terverifikasi. Terima kasih!`
+                : `Maaf, donasi Anda tidak dapat kami verifikasi. Jumlah donasi telah disesuaikan kembali.`,
             'DONATION_UPDATE'
         );
 
-        res.json(donation);
+        res.json(updatedDonation);
     } catch (error) {
+        console.error("Error updating donation status:", error);
         res.status(500).json({ error: error.message });
     }
 };

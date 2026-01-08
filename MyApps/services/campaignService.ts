@@ -16,6 +16,12 @@ export interface Campaign {
     };
     createdAt: string;
     updatedAt: string;
+    donations?: {
+        id: string;
+        amount: number;
+        createdAt: string;
+        user: { name: string };
+    }[];
 }
 
 /**

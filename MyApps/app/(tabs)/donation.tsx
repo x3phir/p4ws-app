@@ -1,9 +1,8 @@
-
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
-  Platform,
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,14 +10,17 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { Search, PawPrint } from "lucide-react-native";
 
 import CampaignCard from "@/components/ui/CampaignCard";
 import DonationListCard from "@/components/ui/DonationListCard";
 import FilterBar from "@/components/ui/FilterBar";
 import UrgentBadge from "@/components/ui/UrgentBadge";
 import { Campaign, getAllCampaigns } from "@/services/campaignService";
+import { Colors } from "@/constants/theme";
+import ScreenWrapper from "@/components/ui/ScreenWrapper";
 
-const { width, height } = Dimensions.get("window");
+const { height } = Dimensions.get("window");
 
 const DonationScreen = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -54,15 +56,12 @@ const DonationScreen = () => {
         const progressB = b.currentAmount / b.targetAmount;
         return progressB - progressA;
       }
-      // Default: Terbaru
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
 
-  // Divide into Urgent and Others based on backend flag
   const urgentCampaigns = filteredAndSortedCampaigns.filter(c => c.isUrgent);
   const otherCampaigns = filteredAndSortedCampaigns.filter(c => !c.isUrgent);
 
-  // Helper to format currency
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("id-ID", {
       style: "currency",
@@ -72,232 +71,365 @@ const DonationScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
-      {/* --- HEADER HIJAU --- */}
+    <ScreenWrapper backgroundColor={Colors.primary}>
+
+      <View style={styles.headerDecoration} pointerEvents="none">
+        <PawPrint size={100} color="rgba(255,255,255,0.1)" style={{ position: 'absolute', top: 20, right: -20, transform: [{ rotate: '15deg' }] }} />
+        <View style={styles.bubble1} />
+      </View>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>
-          Donasi <Text style={styles.headerBold}>Kucing</Text>
-        </Text>
-        <View style={styles.searchContainer}>
-          <TextInput
-            placeholder="Cari Campaign"
-            placeholderTextColor="#999"
-            style={styles.searchInput}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-        </View>
+        <Text style={styles.headerTitle}>Donasi Kucing</Text>
       </View>
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {isLoading ? (
-          <View style={{ marginTop: 50 }}>
-            <ActivityIndicator size="large" color="#B5E661" />
+      <View style={styles.contentCard}>
+        <View style={styles.searchBarWrapper}>
+          <View style={styles.searchContainer}>
+            <Search color="#9CA3AF" size={20} />
+            <TextInput
+              placeholder="Cari program donasi..."
+              placeholderTextColor="#9CA3AF"
+              style={styles.searchInput}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
           </View>
-        ) : (
-          <>
-            {/* --- HORIZONTAL SECTION (URGENT) --- */}
-            {urgentCampaigns.length > 0 && (
-              <View style={styles.sectionContainer}>
-                <Text style={styles.sectionTitle}>Dibutuhkan Cepat</Text>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.horizontalScroll}
-                >
-                  {urgentCampaigns.map((campaign) => (
-                    <View key={campaign.id} style={styles.urgentCardWrapper}>
-                      <CampaignCard
+        </View>
+
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+          {isLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#1A1A1A" />
+              <Text style={styles.loadingText}>Memuat program donasi...</Text>
+            </View>
+          ) : (
+            <>
+              {urgentCampaigns.length > 0 && (
+                <View style={styles.sectionContainer}>
+                  <Text style={styles.sectionTitle}>Dibutuhkan Cepat</Text>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.horizontalScroll}
+                  >
+                    {urgentCampaigns.map((campaign) => (
+                      <View key={campaign.id} style={styles.urgentCardWrapper}>
+                        <CampaignCard
+                          id={campaign.id}
+                          title={campaign.title}
+                          shelter={campaign.shelter?.name || "Shelter"}
+                          collected={formatCurrency(campaign.currentAmount)}
+                          progress={Math.min(campaign.currentAmount / campaign.targetAmount, 1)}
+                          imageUri={campaign.imageUrl}
+                        />
+                        <UrgentBadge />
+                      </View>
+                    ))}
+                  </ScrollView>
+                </View>
+              )}
+
+              <View style={styles.listSection}>
+                <Text style={styles.sectionTitle}>Program Lainnya</Text>
+
+                <FilterBar
+                  onSortPress={() => setIsSortModalVisible(true)}
+                />
+
+                <View style={styles.listContainer}>
+                  {otherCampaigns.length > 0 ? (
+                    otherCampaigns.map((campaign) => (
+                      <DonationListCard
+                        key={campaign.id}
                         id={campaign.id}
                         title={campaign.title}
-                        shelter={campaign.shelter?.name || "Shelter"}
+                        community={campaign.shelter?.name || "Komunitas"}
                         collected={formatCurrency(campaign.currentAmount)}
                         progress={Math.min(campaign.currentAmount / campaign.targetAmount, 1)}
                         imageUri={campaign.imageUrl}
                       />
-                      <UrgentBadge />
-                    </View>
-                  ))}
-                </ScrollView>
+                    ))
+                  ) : (
+                    urgentCampaigns.length === 0 && (
+                      <View style={styles.emptyContainer}>
+                        <Text style={styles.emptyEmoji}>📦</Text>
+                        <Text style={styles.emptyText}>Belum ada program donasi.</Text>
+                      </View>
+                    )
+                  )}
+                </View>
               </View>
-            )}
+            </>
+          )}
+        </ScrollView>
+      </View>
 
-            {/* --- VERTICAL LIST SECTION --- */}
-            <View style={styles.listSection}>
-              <Text style={[styles.sectionTitle, { paddingHorizontal: 24 }]}>
-                Program Lainnya
-              </Text>
-
-              <FilterBar
-                onSortPress={() => setIsSortModalVisible(true)}
-                onFilterPress={() => alert("Filter functionality coming soon!")}
-              />
-
-              <View style={styles.listContainer}>
-                {otherCampaigns.length > 0 ? (
-                  otherCampaigns.map((campaign) => (
-                    <DonationListCard
-                      key={campaign.id}
-                      id={campaign.id}
-                      title={campaign.title}
-                      community={campaign.shelter?.name || "Komunitas"}
-                      collected={formatCurrency(campaign.currentAmount)}
-                      progress={Math.min(campaign.currentAmount / campaign.targetAmount, 1)}
-                      imageUri={campaign.imageUrl}
-                    />
-                  ))
-                ) : (
-                  urgentCampaigns.length === 0 && (
-                    <Text style={{ textAlign: "center", marginTop: 20, color: "#666" }}>
-                      Belum ada campaign lainnya.
-                    </Text>
-                  )
-                )}
-              </View>
-            </View>
-          </>
-        )}
-      </ScrollView>
-
-      {/* Sort Modal */}
-      {isSortModalVisible && (
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+      {/* Sort Modal - FIXED */}
+      <Modal
+        visible={isSortModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setIsSortModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setIsSortModalVisible(false)}
+        >
+          <TouchableOpacity
+            style={styles.modalContent}
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View style={styles.modalHandle} />
             <Text style={styles.modalTitle}>Urutkan Donasi</Text>
-            {["Terbaru", "Target", "Progress"].map(option => (
-              <TouchableOpacity
-                key={option}
-                style={styles.modalOption}
-                onPress={() => {
-                  setSortOption(option);
-                  setIsSortModalVisible(false);
-                }}
-              >
-                <Text style={[styles.modalOptionText, sortOption === option && styles.activeModalOptionText]}>{option}</Text>
-              </TouchableOpacity>
-            ))}
+            <View style={styles.modalOptionsList}>
+              {[
+                { value: "Terbaru", label: "Terbaru", emoji: "🕐" },
+                { value: "Target", label: "Target Tertinggi", emoji: "🎯" },
+                { value: "Progress", label: "Progress Terbanyak", emoji: "📊" }
+              ].map(option => (
+                <TouchableOpacity
+                  key={option.value}
+                  style={[styles.modalOption, sortOption === option.value && styles.activeModalOption]}
+                  onPress={() => {
+                    setSortOption(option.value);
+                    setIsSortModalVisible(false);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.modalOptionContent}>
+                    <Text style={styles.modalOptionEmoji}>{option.emoji}</Text>
+                    <Text style={[styles.modalOptionText, sortOption === option.value && styles.activeModalOptionText]}>
+                      {option.label}
+                    </Text>
+                  </View>
+                  {sortOption === option.value && (
+                    <View style={styles.checkmark}>
+                      <Text style={styles.checkmarkText}>✓</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
             <TouchableOpacity
               style={styles.closeModalBtn}
               onPress={() => setIsSortModalVisible(false)}
+              activeOpacity={0.7}
             >
               <Text style={styles.closeModalText}>Tutup</Text>
             </TouchableOpacity>
-          </View>
-        </View>
-      )}
-    </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
+    </ScreenWrapper>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F5EFE6",
-  },
   header: {
-    backgroundColor: "#B5E661",
-    paddingTop: Platform.OS === "ios" ? 60 : 50,
-    paddingBottom: 35,
+    paddingTop: 60,
+    paddingBottom: 20,
     paddingHorizontal: 24,
-    borderBottomLeftRadius: 40,
-    borderBottomRightRadius: 40,
-    zIndex: 10,
   },
   headerTitle: {
     fontSize: 28,
-    color: "black",
-  },
-  headerBold: {
     fontWeight: "900",
+    color: "#1A1A1A",
+    letterSpacing: -0.5,
+  },
+  bubble1: {
+    position: 'absolute',
+    top: -50,
+    left: -50,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+  },
+  headerDecoration: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 300,
+    zIndex: 0,
+  },
+  contentCard: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    paddingTop: 24,
+    minHeight: height - 150,
+  },
+  searchBarWrapper: {
+    paddingHorizontal: 24,
+    marginBottom: 16,
   },
   searchContainer: {
-    marginTop: 25,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F3F4F6",
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    height: 52,
   },
   searchInput: {
-    backgroundColor: "#FDF6E9",
-    borderRadius: 20,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    fontSize: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 2,
+    flex: 1,
+    marginLeft: 10,
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#1A1A1A",
   },
   scrollContent: {
-    paddingBottom: 120,
+    paddingBottom: 100,
+  },
+  loadingContainer: {
+    paddingVertical: 100,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: "#6B7280",
+    fontWeight: "600",
   },
   sectionContainer: {
-    paddingVertical: 25,
+    paddingVertical: 16,
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: "800",
-    marginBottom: 15,
-    paddingHorizontal: 24,
     color: "#1A1A1A",
+    marginBottom: 16,
+    paddingHorizontal: 24,
+    letterSpacing: -0.3,
   },
   horizontalScroll: {
     paddingLeft: 24,
-    paddingRight: 10,
+    paddingRight: 8,
   },
   urgentCardWrapper: {
     position: "relative",
-    marginRight: 15,
+    marginRight: 16,
   },
   listSection: {
-    marginTop: 10,
+    paddingTop: 8,
   },
   listContainer: {
-    paddingTop: 5,
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
+  },
+  emptyContainer: {
+    paddingVertical: 60,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptyEmoji: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  emptyText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#9CA3AF",
   },
   modalOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
   },
   modalContent: {
-    width: '80%',
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 24,
+    backgroundColor: "white",
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 32,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 10,
+  },
+  modalHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: "#E5E7EB",
+    borderRadius: 2,
+    alignSelf: "center",
+    marginBottom: 20,
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 22,
+    fontWeight: "900",
+    color: "#1A1A1A",
+    marginBottom: 20,
+    textAlign: "center",
+    letterSpacing: -0.5,
+  },
+  modalOptionsList: {
+    gap: 10,
     marginBottom: 16,
-    textAlign: 'center',
   },
   modalOption: {
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 16,
+    backgroundColor: "#F9FAFB",
+    borderWidth: 2,
+    borderColor: "#F3F4F6",
+  },
+  activeModalOption: {
+    backgroundColor: "#FEF3C7",
+    borderColor: "#FCD34D",
+  },
+  modalOptionContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  modalOptionEmoji: {
+    fontSize: 20,
   },
   modalOptionText: {
     fontSize: 16,
-    color: '#4B5563',
+    fontWeight: "700",
+    color: "#6B7280",
   },
   activeModalOptionText: {
-    color: '#B5E661',
-    fontWeight: 'bold',
+    color: "#92400E",
+  },
+  checkmark: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "#92400E",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  checkmarkText: {
+    color: "#FEF3C7",
+    fontSize: 14,
+    fontWeight: "900",
   },
   closeModalBtn: {
-    marginTop: 16,
-    paddingVertical: 10,
-    backgroundColor: '#F3F4F6',
-    borderRadius: 10,
-    alignItems: 'center',
+    marginTop: 8,
+    paddingVertical: 16,
+    alignItems: "center",
+    backgroundColor: "#F3F4F6",
+    borderRadius: 16,
   },
   closeModalText: {
-    color: '#4B5563',
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#6B7280",
   },
 });
 

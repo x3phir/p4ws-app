@@ -1,12 +1,12 @@
 import { useAuth } from "@/context/AuthContext";
-import PawsHeader from "@/components/ui/PawsHeader";
 import { login as loginAPI } from "@/services/authService";
 import { useRouter } from "expo-router";
-import { Apple, Chrome } from "lucide-react-native";
+import { Apple, Chrome, PawPrint } from "lucide-react-native";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Dimensions,
   ScrollView,
   StyleSheet,
   Text,
@@ -14,8 +14,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-// Import SafeAreaView tetap dari sini
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Colors } from "@/constants/theme";
+import ScreenWrapper from "@/components/ui/ScreenWrapper";
+
+const { height } = Dimensions.get("window");
 
 export default function Login() {
   const router = useRouter();
@@ -46,108 +48,192 @@ export default function Login() {
   };
 
   return (
-    // DISINI PERUBAHANNYA: Tambahkan edges tanpa 'top'
-    <SafeAreaView style={styles.container} edges={["left", "right", "bottom"]}>
-      <PawsHeader />
-      <ScrollView
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.formGroup}>
-          <TextInput
-            placeholder="Email"
-            placeholderTextColor="#888"
-            style={styles.input}
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-          />
-          <TextInput
-            placeholder="Password"
-            placeholderTextColor="#888"
-            secureTextEntry
-            style={styles.input}
-            value={password}
-            onChangeText={setPassword}
-          />
-        </View>
+    <ScreenWrapper backgroundColor={Colors.primary}>
+      <View style={styles.headerDecoration}>
+        <PawPrint size={100} color="rgba(255,255,255,0.1)" style={{ position: 'absolute', top: 20, right: -20, transform: [{ rotate: '15deg' }] }} />
+        <View style={styles.bubble1} />
+      </View>
 
-        <TouchableOpacity
-          style={[styles.button, isLoading && styles.buttonDisabled]}
-          onPress={handleLogin}
-          disabled={isLoading}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Log in</Text>
+      </View>
+
+      <View style={styles.contentCard}>
+        <ScrollView
+          style={styles.scrollView}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
         >
-          {isLoading ? (
-            <ActivityIndicator color="black" />
-          ) : (
-            <Text style={styles.buttonText}>Log in</Text>
-          )}
-        </TouchableOpacity>
+          <View style={styles.formGroup}>
+            <TextInput
+              placeholder="Email"
+              placeholderTextColor="#9CA3AF"
+              style={styles.input}
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+            />
+            <TextInput
+              placeholder="Password"
+              placeholderTextColor="#9CA3AF"
+              secureTextEntry
+              style={styles.input}
+              value={password}
+              onChangeText={setPassword}
+            />
+          </View>
 
-        <View style={styles.socialSection}>
-          <Text style={styles.orText}>Or</Text>
-          <View style={styles.socialButtons}>
-            <TouchableOpacity style={styles.socialIcon}>
-              <Apple color="black" size={32} fill="black" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.socialIcon}>
-              <Chrome color="black" size={32} />
+          <TouchableOpacity
+            style={[styles.button, isLoading && styles.buttonDisabled]}
+            onPress={handleLogin}
+            disabled={isLoading}
+            activeOpacity={0.8}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="#11181C" />
+            ) : (
+              <Text style={styles.buttonText}>Masuk Sekarang</Text>
+            )}
+          </TouchableOpacity>
+
+          <View style={styles.socialSection}>
+            <Text style={styles.orText}>atau gunakan</Text>
+            <View style={styles.socialButtons}>
+              <TouchableOpacity style={styles.socialIcon}>
+                <Apple color="#11181C" size={28} fill="#11181C" />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.socialIcon}>
+                <Chrome color="#11181C" size={28} />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Belum punya akun? </Text>
+            <TouchableOpacity onPress={() => router.push("/register")}>
+              <Text style={styles.linkText}>Daftar</Text>
             </TouchableOpacity>
           </View>
-        </View>
-
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Don't have an account? </Text>
-          <TouchableOpacity onPress={() => router.push("/register")}>
-            <Text style={styles.linkText}>Sign in</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      </View>
+    </ScreenWrapper>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#Fdf7f0" },
-  scrollView: { flex: 1, paddingHorizontal: 30 },
-  formGroup: { gap: 15, marginTop: 20 },
+  headerDecoration: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 300,
+    zIndex: 0,
+  },
+  bubble1: {
+    position: 'absolute',
+    top: -50,
+    left: -50,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+  },
+  header: {
+    paddingTop: 60,
+    paddingBottom: 20,
+    paddingHorizontal: 24,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: "900",
+    color: "#1A1A1A",
+    letterSpacing: -0.5,
+  },
+  contentCard: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    paddingTop: 32,
+    minHeight: height - 150,
+  },
+  scrollView: {
+    flex: 1,
+    paddingHorizontal: 24,
+  },
+  scrollContent: {
+    paddingBottom: 40,
+  },
+  formGroup: {
+    gap: 16,
+  },
   input: {
     width: "100%",
-    borderWidth: 1,
-    borderColor: "black",
-    borderRadius: 15,
-    padding: 15,
+    backgroundColor: "#F3F4F6",
+    borderRadius: 16,
+    padding: 16,
     fontSize: 16,
-    color: "black",
+    fontWeight: "500",
+    color: "#11181C",
   },
   button: {
     width: "100%",
-    backgroundColor: "#AEE637",
-    borderRadius: 15,
-    paddingVertical: 15,
-    marginTop: 40,
+    backgroundColor: Colors.primary,
+    borderRadius: 16,
+    paddingVertical: 18,
+    marginTop: 32,
     alignItems: "center",
-    elevation: 3,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   buttonDisabled: {
     opacity: 0.6,
   },
-  buttonText: { color: "black", fontWeight: "bold", fontSize: 18 },
-  socialSection: { alignItems: "center", marginTop: 40 },
-  orText: { fontSize: 16, fontWeight: "500", marginBottom: 15, color: "black" },
-  socialButtons: { flexDirection: "row", gap: 20 },
+  buttonText: {
+    color: "#11181C",
+    fontWeight: "800",
+    fontSize: 18,
+  },
+  socialSection: {
+    alignItems: "center",
+    marginTop: 40,
+  },
+  orText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#9CA3AF",
+    marginBottom: 20,
+  },
+  socialButtons: {
+    flexDirection: "row",
+    gap: 16,
+  },
   socialIcon: {
-    borderWidth: 1,
-    borderColor: "black",
-    borderRadius: 12,
-    padding: 10,
+    width: 60,
+    height: 60,
+    borderWidth: 1.5,
+    borderColor: "#F3F4F6",
+    borderRadius: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
   },
   footer: {
     flexDirection: "row",
     justifyContent: "center",
-    marginTop: 50,
-    marginBottom: 50,
+    marginTop: 40,
   },
-  footerText: { color: "black", fontSize: 16 },
-  linkText: { color: "#8BC34A", fontWeight: "bold", fontSize: 16 },
+  footerText: {
+    color: "#6B7280",
+    fontSize: 15,
+    fontWeight: "500",
+  },
+  linkText: {
+    color: Colors.primary,
+    fontWeight: "800",
+    fontSize: 15,
+  },
 });

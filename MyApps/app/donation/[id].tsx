@@ -78,7 +78,6 @@ const DonationDetailScreen = () => {
         contentContainerStyle={styles.scrollContent}
       >
         <DetailHeader imageUri={campaign.imageUrl} />
-
         <View style={styles.bodyContainer}>
           <Text style={styles.titleText}>
             {campaign.title}
@@ -116,10 +115,24 @@ const DonationDetailScreen = () => {
 
           <View style={styles.donorSection}>
             <View style={styles.donorHeaderRow}>
-              <Text style={styles.sectionTitle}>Riwayat Donasi</Text>
-              {/* Count could be added if we fetched donations count */}
+              <Text style={styles.sectionTitle}>Riwayat Donasi ({campaign.donations?.length || 0})</Text>
             </View>
-            <Text style={{ color: '#666', marginTop: 10 }}>Belum ada riwayat donasi (Placeholder).</Text>
+            {campaign.donations && campaign.donations.length > 0 ? (
+              campaign.donations.map((donation) => (
+                <View key={donation.id} style={styles.donorCard}>
+                  <View style={styles.donorAvatar}>
+                    <Text style={styles.donorAvatarText}>{donation.user.name.charAt(0).toUpperCase()}</Text>
+                  </View>
+                  <View style={styles.donorInfo}>
+                    <Text style={styles.donorName}>{donation.user.name}</Text>
+                    <Text style={styles.donorDate}>{new Date(donation.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</Text>
+                  </View>
+                  <Text style={styles.donorAmount}>Rp{donation.amount.toLocaleString()}</Text>
+                </View>
+              ))
+            ) : (
+              <Text style={{ color: '#666', marginTop: 10, fontStyle: 'italic' }}>Belum ada riwayat donasi untuk program ini.</Text>
+            )}
           </View>
         </View>
       </ScrollView>
@@ -220,6 +233,48 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
   },
   donateButtonText: { color: "#FFFFFF", fontSize: 18, fontWeight: "900" },
+  donorCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    padding: 12,
+    borderRadius: 16,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+  },
+  donorAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#32A85220',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  donorAvatarText: {
+    color: '#32A852',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  donorInfo: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  donorName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1A1A1A',
+  },
+  donorDate: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    marginTop: 2,
+  },
+  donorAmount: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#32A852',
+  },
 });
 
 export default DonationDetailScreen;

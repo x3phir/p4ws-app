@@ -5,6 +5,7 @@ export enum ReportStatus {
     PROCESSING = "PROCESSING",
     COMPLETED = "COMPLETED",
     CANCELLED = "CANCELLED",
+    REJECTED = "REJECTED",
 }
 
 export type CatCondition = "SEHAT" | "TERLUKA" | "SAKIT";
@@ -39,6 +40,7 @@ export interface CatReport {
     description: string;
     shelter: Shelter;
     status: ReportStatus;
+    adminNote?: string;
     timeline: TimelineEntry[];
     createdAt: Date;
     updatedAt: Date;

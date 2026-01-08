@@ -7,6 +7,7 @@ import {
     Text,
     TouchableOpacity,
     View,
+    Pressable,
 } from "react-native";
 import { Bell, ChevronLeft, Trash2, CheckCircle } from "lucide-react-native";
 import { useRouter } from "expo-router";
@@ -46,27 +47,59 @@ export default function NotificationsScreen() {
         fetchNotifications();
     };
 
-    const handleMarkAsRead = async (id: string) => {
-        await markAsRead(id);
-        setNotifications(prev =>
-            prev.map(n => n.id === id ? { ...n, isRead: true } : n)
-        );
+    const handleNotificationPress = async (notification: Notification) => {
+        // Mark as read jika belum dibaca
+        if (!notification.isRead) {
+            await markAsRead(notification.id);
+            setNotifications(prev =>
+                prev.map(n => n.id === notification.id ? { ...n, isRead: true } : n)
+            );
+        }
+
+        // TODO: Navigate ke detail berdasarkan notification type
+        // Contoh routing berdasarkan tipe notifikasi:
+        // if (notification.type === 'adoption') {
+        //     router.push(`/adopt/${notification.referenceId}`);
+        // } else if (notification.type === 'donation') {
+        //     router.push(`/donation/${notification.referenceId}`);
+        // } else if (notification.type === 'report') {
+        //     router.push(`/lapor/${notification.referenceId}`);
+        // }
+
+        console.log('Notification clicked:', notification);
     };
 
-    const handleDelete = async (id: string) => {
-        await deleteNotification(id);
-        setNotifications(prev => prev.filter(n => n.id !== id));
+    const handleDelete = async (id: string, event?: any) => {
+        // Stop propagation untuk mencegah trigger parent TouchableOpacity
+        if (event) {
+            event.stopPropagation();
+        }
+
+        try {
+            await deleteNotification(id);
+            setNotifications(prev => prev.filter(n => n.id !== id));
+        } catch (error) {
+            console.error('Error deleting notification:', error);
+        }
     };
 
     const handleMarkAllRead = async () => {
-        await markAllAsRead();
-        setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+        try {
+            await markAllAsRead();
+            setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+        } catch (error) {
+            console.error('Error marking all as read:', error);
+        }
     };
 
     const renderItem = ({ item }: { item: Notification }) => (
-        <TouchableOpacity
-            style={[styles.notificationCard, !item.isRead && styles.unreadCard]}
-            onPress={() => handleMarkAsRead(item.id)}
+        <Pressable
+            style={({ pressed }) => [
+                styles.notificationCard,
+                !item.isRead && styles.unreadCard,
+                pressed && styles.pressedCard
+            ]}
+            onPress={() => handleNotificationPress(item)}
         >
             <View style={styles.iconContainer}>
                 <View style={[styles.iconCircle, !item.isRead && styles.unreadIconCircle]}>
@@ -88,13 +121,20 @@ export default function NotificationsScreen() {
                 </Text>
             </View>
 
-            <TouchableOpacity
-                style={styles.deleteBtn}
-                onPress={() => handleDelete(item.id)}
+            <Pressable
+                style={({ pressed }) => [
+                    styles.deleteBtn,
+                    pressed && styles.deleteBtnPressed
+                ]}
+                onPress={(e) => {
+                    e.stopPropagation();
+                    handleDelete(item.id);
+                }}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
                 <Trash2 size={18} color="#EF4444" />
-            </TouchableOpacity>
-        </TouchableOpacity>
+            </Pressable>
+        </Pressable>
     );
 
     return (
@@ -188,6 +228,10 @@ const styles = StyleSheet.create({
         borderLeftColor: "#AEE637",
         backgroundColor: "#F9FAFB",
     },
+    pressedCard: {
+        opacity: 0.7,
+        transform: [{ scale: 0.98 }],
+    },
     iconContainer: {
         marginRight: 12,
     },
@@ -215,6 +259,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: "600",
         color: "#4B5563",
+        flex: 1,
     },
     unreadText: {
         color: "#1F2937",
@@ -223,6 +268,7 @@ const styles = StyleSheet.create({
     timeText: {
         fontSize: 12,
         color: "#9CA3AF",
+        marginLeft: 8,
     },
     message: {
         fontSize: 14,
@@ -232,6 +278,10 @@ const styles = StyleSheet.create({
     deleteBtn: {
         padding: 8,
         marginLeft: 8,
+        borderRadius: 8,
+    },
+    deleteBtnPressed: {
+        backgroundColor: "#FEE2E2",
     },
     center: {
         flex: 1,
